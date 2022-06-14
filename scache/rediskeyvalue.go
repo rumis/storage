@@ -51,7 +51,10 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 				return ErrKeyFnNil
 			}
 			err := vals.ForEach(func(item interface{}) error {
-				key := opts.KeyFn(item)
+				key, err := opts.KeyFn(item)
+				if err != nil {
+					return err
+				}
 				val, err := ujson.Marshal(item)
 				if err != nil {
 					return err
@@ -69,7 +72,10 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
 			}
-			key := opts.KeyFn(vals)
+			key, err := opts.KeyFn(vals)
+			if err != nil {
+				return err
+			}
 			val, err := ujson.Marshal(vals)
 			if err != nil {
 				return err
@@ -128,7 +134,10 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 			}
 			allRes := make([]string, 0)
 			err := keys.ForEach(func(item interface{}) error {
-				key := opts.KeyFn(item)
+				key, err := opts.KeyFn(item)
+				if err != nil {
+					return err
+				}
 				res, err := opts.Client.Get(ctx, key).Result()
 				if err != nil {
 					return err
@@ -144,7 +153,10 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 			if opts.KeyFn == nil {
 				return nil, ErrKeyFnNil
 			}
-			key := opts.KeyFn(keys)
+			key, err := opts.KeyFn(keys)
+			if err != nil {
+				return nil, err
+			}
 			res, err := opts.Client.Get(ctx, key).Result()
 			if err != nil {
 				return nil, err

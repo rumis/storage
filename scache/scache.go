@@ -18,11 +18,11 @@ type RedisKeyValueWriter func(context.Context, interface{}, time.Duration) error
 type RedisKeyValueDeleter func(context.Context, interface{}) error
 
 // RedisKeyGenerator Redis Key生成
-type RedisKeyGenerator func(interface{}) string
+type RedisKeyGenerator func(interface{}) (string, error)
 
 // 选项
 type RedisOptions struct {
-	KeyFn  func(interface{}) string
+	KeyFn  RedisKeyGenerator
 	Prefix string
 	Client *redis.Client
 }
@@ -60,3 +60,4 @@ func WithPrefix(pre string) RedisOptionHandler {
 var ErrClientNil error = errors.New("redis client is nil")
 var ErrKeyFnNil error = errors.New("key generater is nil")
 var ErrPrefixNil error = errors.New("key prefix is nil")
+var ErrKeyGenerate error = errors.New("key generate error")
