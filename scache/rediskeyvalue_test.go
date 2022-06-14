@@ -2,6 +2,7 @@ package scache
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -132,6 +133,28 @@ func TestRedisKV(t *testing.T) {
 		}
 	}
 
+	// 读取写入值 - 自定义读取Reader
+	r1 := NewPersonReader(WithClient(rClient), WithKeyFn(func(item interface{}) (string, error) {
+		p, ok := item.(Person)
+		if !ok {
+			return "", ErrKeyGenerate
+		}
+		return "test_v1_" + p.Name, nil
+	}))
+	personRes, err := r1(ctx, expectArr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps, ok := personRes.([]Person)
+	if !ok {
+		t.Fatal("redis read error:", res)
+	}
+	for i, v := range ps {
+		if v.Age != expectArr[i].Age {
+			t.Fatal(v)
+		}
+	}
+
 }
 
 type Person struct {
@@ -150,4 +173,36 @@ func (p Persons) ForEach(fn storage.Iterator) error {
 		}
 	}
 	return nil
+}
+
+func NewPersonReader(hands ...RedisOptionHandler) RedisKeyValueReader {
+	kvReader := NewRedisKeyValueReader(hands...)
+	return func(ctx context.Context, params interface{}) (interface{}, error) {
+		items, err := kvReader(ctx, params)
+		if err != nil {
+			return nil, err
+		}
+		switch v := items.(type) {
+		case string:
+			var p Person
+			err := ujson.Unmarshal([]byte(v), &p)
+			if err != nil {
+				return nil, err
+			}
+			return p, nil
+		case []string:
+			ps := make([]Person, 0)
+			for _, pv := range v {
+				var p Person
+				err := ujson.Unmarshal([]byte(pv), &p)
+				if err != nil {
+					return nil, err
+				}
+				ps = append(ps, p)
+			}
+			return ps, nil
+		default:
+			return nil, errors.New("reader return value error")
+		}
+	}
 }
