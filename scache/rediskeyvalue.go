@@ -9,12 +9,6 @@ import (
 	"github.com/rumis/storage/pkg/ujson"
 )
 
-// KeyValue 键值对
-type KeyValue struct {
-	Key   string
-	Value string
-}
-
 // NewRedisKeyValueWriter 创建新的缓存写入
 func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 	// 默认配置
@@ -28,7 +22,7 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 			return ErrClientNil
 		}
 		switch vals := params.(type) {
-		case KeyValue:
+		case Pair:
 			if opts.Prefix == "" {
 				return ErrPrefixNil
 			}
@@ -36,7 +30,7 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 			if err != nil {
 				return err
 			}
-		case []KeyValue:
+		case []Pair:
 			if opts.Prefix == "" {
 				return ErrPrefixNil
 			}

@@ -8,10 +8,16 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
+// Pair 键值对
+type Pair struct {
+	Key   string
+	Value string
+}
+
 // Redis K-V类型读取
 type RedisKeyValueReader func(context.Context, interface{}) (interface{}, error)
 
-// Redis K-V类型读取
+// Redis K-V类型写入
 type RedisKeyValueWriter func(context.Context, interface{}, time.Duration) error
 
 // Redis K-V类型删除
@@ -19,6 +25,12 @@ type RedisKeyValueDeleter func(context.Context, interface{}) error
 
 // RedisKeyGenerator Redis Key生成
 type RedisKeyGenerator func(interface{}) (string, error)
+
+// Redis List类型写入
+type RedisListWriter func(context.Context, interface{}) error
+
+// Redis List类型读取
+type RedisListReader func(context.Context) (interface{}, error)
 
 // 选项
 type RedisOptions struct {

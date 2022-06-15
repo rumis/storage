@@ -29,7 +29,7 @@ func TestRedisKV(t *testing.T) {
 	writer := NewRedisKeyValueWriter(WithClient(rClient), WithPrefix("test_v1_"))
 
 	// 写入单KV对象
-	kv1 := KeyValue{
+	kv1 := Pair{
 		Key:   "k1",
 		Value: "v1",
 	}
@@ -39,15 +39,15 @@ func TestRedisKV(t *testing.T) {
 	}
 
 	// 写入多KV对象
-	kv2 := KeyValue{
+	kv2 := Pair{
 		Key:   "k2",
 		Value: "v2",
 	}
-	kv3 := KeyValue{
+	kv3 := Pair{
 		Key:   "k3",
 		Value: "v3",
 	}
-	err = writer(ctx, []KeyValue{
+	err = writer(ctx, []Pair{
 		kv2, kv3,
 	}, time.Second)
 	if err != nil {
