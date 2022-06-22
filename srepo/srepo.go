@@ -2,12 +2,16 @@ package srepo
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 )
+
+// 错误定义
+var ErrBothDbAndTxNil error = errors.New("both db and tx is nil")
 
 // 选项
 type RepoOptions struct {
-	DB      *sql.DB
+	TX      interface{}
+	DB      interface{}
 	Name    string
 	Columns []string
 }
@@ -28,9 +32,16 @@ func WithName(name string) RepoOptionHandler {
 }
 
 // WithDB 数据库实例
-func WithDB(db *sql.DB) RepoOptionHandler {
+func WithDB(db interface{}) RepoOptionHandler {
 	return func(opts *RepoOptions) {
 		opts.DB = db
+	}
+}
+
+// WithDB 数据库实例
+func WithTX(tx interface{}) RepoOptionHandler {
+	return func(opts *RepoOptions) {
+		opts.TX = tx
 	}
 }
 
@@ -41,8 +52,11 @@ func WithColumns(columns []string) RepoOptionHandler {
 	}
 }
 
+// SQL子句处理方法
+type ClauseHandler func(interface{})
+
 // 数据插入
-type RepoInster func(context.Context, interface{}) (int64, error)
+type RepoInserter func(context.Context, interface{}) (int64, error)
 
 // 数据更新
 type RepoUpdater func(context.Context, interface{}, ...ClauseHandler) (int64, error)

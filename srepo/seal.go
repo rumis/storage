@@ -6,7 +6,15 @@ import (
 
 	"github.com/rumis/seal"
 	"github.com/rumis/seal/builder"
+	"github.com/rumis/seal/options"
 )
+
+var sealOpts []options.SealOptionsFunc
+
+// InitSealOptions 初始化Seal相关选项
+func InitSealOptions(fns ...options.SealOptionsFunc) {
+	sealOpts = fns
+}
 
 // NewSealMysqlDB 创建Seal.Mysql对象
 func NewSealMysqlDB(db *sql.DB) seal.DB {
@@ -16,8 +24,6 @@ func NewSealMysqlDB(db *sql.DB) seal.DB {
 	}
 	return sealDb
 }
-
-type ClauseHandler func(interface{})
 
 // type SelectClauseHandler func(q *query.SelectQuery)
 
