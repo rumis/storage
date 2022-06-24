@@ -17,7 +17,10 @@ type Pair struct {
 }
 
 // Redis K-V类型读取
-type RedisKeyValueReader func(context.Context, interface{}) (interface{}, error)
+type RedisKeyValueObjectReader func(context.Context, interface{}, interface{}) error
+
+// Redis K-V类型读取
+type RedisKeyValueStringReader func(context.Context, interface{}) (interface{}, error)
 
 // Redis K-V类型写入
 type RedisKeyValueWriter func(context.Context, interface{}, time.Duration) error
@@ -83,3 +86,4 @@ var ErrClientNil error = errors.New("redis client is nil")
 var ErrKeyFnNil error = errors.New("key generater is nil")
 var ErrPrefixNil error = errors.New("key prefix is nil")
 var ErrKeyGenerate error = errors.New("key generate error")
+var ErrKeyFormat error = errors.New("key format error")

@@ -2,6 +2,7 @@ package scache
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -84,7 +85,7 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 }
 
 // NewRedisKeyValueReader 自定义Redis读取
-func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
+func NewRedisKeyValueStringReader(hands ...RedisOptionHandler) RedisKeyValueStringReader {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -122,9 +123,28 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 				allRes = append(allRes, res)
 			}
 			return allRes, nil
+		default:
+			return nil, ErrKeyFormat
+		}
+	}
+}
+
+// NewRedisKeyValueReader 自定义Redis读取
+func NewRedisKeyValueObjectReader(hands ...RedisOptionHandler) RedisKeyValueObjectReader {
+	// 默认配置
+	opts := DefaultRedisOptions()
+	// 自定义配置设置
+	for _, hand := range hands {
+		hand(&opts)
+	}
+	return func(ctx context.Context, params interface{}, data interface{}) error {
+		if opts.Client == nil {
+			return ErrClientNil
+		}
+		switch keys := params.(type) {
 		case storage.ForEach:
 			if opts.KeyFn == nil {
-				return nil, ErrKeyFnNil
+				return ErrKeyFnNil
 			}
 			allRes := make([]string, 0)
 			err := keys.ForEach(func(item interface{}) error {
@@ -140,22 +160,32 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 				return nil
 			})
 			if err != nil {
-				return allRes, err
+				return err
 			}
-			return allRes, nil
+			// 拼接为数组
+			totalRes := "[" + strings.Join(allRes, ",") + "]"
+			err = ujson.Unmarshal([]byte(totalRes), data)
+			if err != nil {
+				return err
+			}
+			return nil
 		default:
 			if opts.KeyFn == nil {
-				return nil, ErrKeyFnNil
+				return ErrKeyFnNil
 			}
 			key, err := opts.KeyFn(keys)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			res, err := opts.Client.Get(ctx, key).Result()
 			if err != nil {
-				return nil, err
+				return err
 			}
-			return res, nil
+			err = ujson.Unmarshal([]byte(res), data)
+			if err != nil {
+				return err
+			}
+			return nil
 		}
 	}
 }

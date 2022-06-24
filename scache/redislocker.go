@@ -14,7 +14,7 @@ var defaultLockerPrefix = "tal_jiaoyan_storage_locker_"
 // DefaultRedisLocker 创建基于Redis的分布式锁
 func DefaultRedisLocker(client *redis.Client) locker.Locker {
 	return locker.NewLocker(
-		locker.WithLockerReader(RedisLockerReader(NewRedisKeyValueReader(WithClient(client), WithPrefix(defaultLockerPrefix)))),
+		locker.WithLockerReader(RedisLockerReader(NewRedisKeyValueStringReader(WithClient(client), WithPrefix(defaultLockerPrefix)))),
 		locker.WithLockerWriter(RedisLockerWriter(NewRedisKeyValueWriter(WithClient(client), WithPrefix(defaultLockerPrefix)), locker.DefaultExpire)),
 	)
 }
@@ -28,7 +28,7 @@ func RedisLockerWriter(w RedisKeyValueWriter, expire time.Duration) locker.Locke
 }
 
 // RedisLockerReader
-func RedisLockerReader(r RedisKeyValueReader) locker.LockerReader {
+func RedisLockerReader(r RedisKeyValueStringReader) locker.LockerReader {
 	return func(ctx context.Context, key string) (string, error) {
 		val, err := r(ctx, key)
 		if err != nil {

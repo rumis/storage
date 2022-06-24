@@ -2,7 +2,6 @@ package scache
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	"github.com/go-redis/redis/v8"
 
 	"github.com/rumis/storage"
-	"github.com/rumis/storage/pkg/ujson"
 )
 
 func TestRedisKV(t *testing.T) {
@@ -76,7 +74,7 @@ func TestRedisKV(t *testing.T) {
 	}
 
 	// 读取对象
-	reader := NewRedisKeyValueReader(WithClient(rClient), WithPrefix("test_v1_"))
+	reader := NewRedisKeyValueStringReader(WithClient(rClient), WithPrefix("test_v1_"))
 
 	// 读取单个对象-key类型为string
 	res, err := reader(ctx, kv1.Key)
@@ -105,7 +103,7 @@ func TestRedisKV(t *testing.T) {
 	}
 
 	// 读取写入的对象值
-	reader1 := NewRedisKeyValueReader(WithClient(rClient), WithKeyFn(func(item interface{}) (string, error) {
+	reader1 := NewRedisKeyValueObjectReader(WithClient(rClient), WithKeyFn(func(item interface{}) (string, error) {
 		p, ok := item.(Person)
 		if !ok {
 			return "", ErrKeyGenerate
@@ -113,47 +111,39 @@ func TestRedisKV(t *testing.T) {
 		return "test_v1_" + p.Name, nil
 	}))
 	expectArr := Persons{obj1, obj2, obj3}
-	objRes, err := reader1(ctx, expectArr)
+	var allps []Person
+	err = reader1(ctx, expectArr, &allps)
 	if err != nil {
 		t.Fatal(err)
 	}
-	objVals, ok := objRes.([]string)
-	if !ok {
-		t.Fatal("redis read error:", res)
-	}
 
-	for i, v := range objVals {
-		var p Person
-		err = ujson.Unmarshal([]byte(v), &p)
-		if err != nil {
-			t.Fatal(err)
-		}
+	for i, p := range allps {
 		if p.Age != expectArr[i].Age {
 			t.Fatal(p)
 		}
 	}
 
-	// 读取写入值 - 自定义读取Reader
-	r1 := NewPersonReader(WithClient(rClient), WithKeyFn(func(item interface{}) (string, error) {
-		p, ok := item.(Person)
-		if !ok {
-			return "", ErrKeyGenerate
-		}
-		return "test_v1_" + p.Name, nil
-	}))
-	personRes, err := r1(ctx, expectArr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ps, ok := personRes.([]Person)
-	if !ok {
-		t.Fatal("redis read error:", res)
-	}
-	for i, v := range ps {
-		if v.Age != expectArr[i].Age {
-			t.Fatal(v)
-		}
-	}
+	// // 读取写入值 - 自定义读取Reader
+	// r1 := NewPersonReader(WithClient(rClient), WithKeyFn(func(item interface{}) (string, error) {
+	// 	p, ok := item.(Person)
+	// 	if !ok {
+	// 		return "", ErrKeyGenerate
+	// 	}
+	// 	return "test_v1_" + p.Name, nil
+	// }))
+	// personRes, err := r1(ctx, expectArr)
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
+	// ps, ok := personRes.([]Person)
+	// if !ok {
+	// 	t.Fatal("redis read error:", res)
+	// }
+	// for i, v := range ps {
+	// 	if v.Age != expectArr[i].Age {
+	// 		t.Fatal(v)
+	// 	}
+	// }
 
 }
 
@@ -175,34 +165,34 @@ func (p Persons) ForEach(fn storage.Iterator) error {
 	return nil
 }
 
-func NewPersonReader(hands ...RedisOptionHandler) RedisKeyValueReader {
-	kvReader := NewRedisKeyValueReader(hands...)
-	return func(ctx context.Context, params interface{}) (interface{}, error) {
-		items, err := kvReader(ctx, params)
-		if err != nil {
-			return nil, err
-		}
-		switch v := items.(type) {
-		case string:
-			var p Person
-			err := ujson.Unmarshal([]byte(v), &p)
-			if err != nil {
-				return nil, err
-			}
-			return p, nil
-		case []string:
-			ps := make([]Person, 0)
-			for _, pv := range v {
-				var p Person
-				err := ujson.Unmarshal([]byte(pv), &p)
-				if err != nil {
-					return nil, err
-				}
-				ps = append(ps, p)
-			}
-			return ps, nil
-		default:
-			return nil, errors.New("reader return value error")
-		}
-	}
-}
+// func NewPersonReader(hands ...RedisOptionHandler) RedisKeyValueReader {
+// 	kvReader := NewRedisKeyValueReader(hands...)
+// 	return func(ctx context.Context, params interface{}) (interface{}, error) {
+// 		items, err := kvReader(ctx, params)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		switch v := items.(type) {
+// 		case string:
+// 			var p Person
+// 			err := ujson.Unmarshal([]byte(v), &p)
+// 			if err != nil {
+// 				return nil, err
+// 			}
+// 			return p, nil
+// 		case []string:
+// 			ps := make([]Person, 0)
+// 			for _, pv := range v {
+// 				var p Person
+// 				err := ujson.Unmarshal([]byte(pv), &p)
+// 				if err != nil {
+// 					return nil, err
+// 				}
+// 				ps = append(ps, p)
+// 			}
+// 			return ps, nil
+// 		default:
+// 			return nil, errors.New("reader return value error")
+// 		}
+// 	}
+// }
