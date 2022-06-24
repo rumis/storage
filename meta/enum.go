@@ -1,4 +1,4 @@
-package storage
+package meta
 
 type DataIntactStat int8
 

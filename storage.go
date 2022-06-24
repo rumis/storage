@@ -2,10 +2,12 @@ package storage
 
 import (
 	"context"
+
+	"github.com/rumis/storage/meta"
 )
 
 // DataHandler 数据处理
-type DataHandler func(ctx context.Context, params interface{}) (interface{}, OptionStatus, error)
+type DataHandler func(ctx context.Context, params interface{}) (interface{}, meta.OptionStatus, error)
 
 // 策略
 
@@ -39,13 +41,13 @@ func Do(ctx context.Context, params interface{}, handlers ...DataHandler) (inter
 	if len(handlers) == 0 {
 		return nil, err
 	}
-	var stat OptionStatus = OptionStatusContinue
+	var stat meta.OptionStatus = meta.OptionStatusContinue
 	for _, fn := range handlers {
 		params, stat, err = fn(ctx, params)
 		if err != nil {
 			return nil, err
 		}
-		if stat == OptionStatusBreak {
+		if stat == meta.OptionStatusBreak {
 			return params, nil
 		}
 	}
