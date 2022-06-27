@@ -11,6 +11,7 @@ var DefaultRetrySpan time.Duration = time.Microsecond * 70
 
 type LockerWriter func(ctx context.Context, key string) error
 type LockerReader func(ctx context.Context, key string) (string, error)
+type LockerDeleter func(ctx context.Context, key string) error
 
 // LockerOptionHandler 数据库配置选项
 type LockerOptionHandler func(*Locker)
@@ -19,6 +20,7 @@ type LockerOptionHandler func(*Locker)
 type Locker struct {
 	Reader     LockerReader
 	Writer     LockerWriter
+	Deleter    LockerDeleter
 	Expire     time.Duration
 	RetryTimes int
 	RetrySpan  time.Duration
@@ -29,6 +31,7 @@ func DefaultLocker() Locker {
 	return Locker{
 		Writer:     func(ctx context.Context, key string) error { return nil },
 		Reader:     func(ctx context.Context, key string) (string, error) { return "", nil },
+		Deleter:    func(ctx context.Context, key string) error { return nil },
 		Expire:     DefaultExpire,
 		RetryTimes: DefaultRetryTimes,
 		RetrySpan:  DefaultRetrySpan,
@@ -55,6 +58,13 @@ func WithLockerWriter(w LockerWriter) LockerOptionHandler {
 func WithLockerReader(r LockerReader) LockerOptionHandler {
 	return func(opts *Locker) {
 		opts.Reader = r
+	}
+}
+
+// WithLockerDeleter 设置locker删除
+func WithLockerDeleter(d LockerDeleter) LockerOptionHandler {
+	return func(opts *Locker) {
+		opts.Deleter = d
 	}
 }
 

@@ -45,7 +45,7 @@ func NewPersonCacheReader() func(ctx context.Context, id string) (Person, error)
 		return p, nil
 	}
 }
-func NewPersonCacheWriter() func(ctx context.Context, p Person) error {
+func NewPersonCacheWriter() func(ctx context.Context, p Person, expire time.Duration) error {
 	w := scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()), scache.WithKeyFn(func(params interface{}) (string, error) {
 		p, ok := params.(Person)
 		if !ok {
@@ -53,8 +53,8 @@ func NewPersonCacheWriter() func(ctx context.Context, p Person) error {
 		}
 		return "tal_test_person_" + strconv.FormatInt(int64(p.ID), 10), nil
 	}))
-	return func(ctx context.Context, p Person) error {
-		err := w(ctx, p, time.Second*10)
+	return func(ctx context.Context, p Person, expire time.Duration) error {
+		err := w(ctx, p, expire)
 		return err
 	}
 }
@@ -83,21 +83,47 @@ func NewNormalFlow() storage.DataHandler {
 		}
 		// 读取缓存
 		p, err := NewPersonCacheReader()(context.TODO(), strconv.FormatInt(int64(id), 10))
-		if err == nil && p.Name == "张三" {
+		if err == nil && p.Name != "" {
 			return p, meta.OptionStatusBreak, nil
 		}
+		// 锁
+		locker := scache.DefaultRedisLocker(scache.DefaultClient(), "person")
+		l, err := locker.Reader(ctx, strconv.Itoa(p.ID))
+		if err == nil && l != "" {
+			// 未抢到锁
+			for i := 0; i < locker.RetryTimes; i++ {
+				time.Sleep(locker.RetrySpan)
+				p, err := NewPersonCacheReader()(context.TODO(), strconv.FormatInt(int64(id), 10))
+				if err == nil && p.Name != "" {
+					return p, meta.OptionStatusBreak, nil
+				}
+			}
+		}
+		// 更新锁，读库
+		err = locker.Writer(ctx, strconv.Itoa(p.ID))
+		if err != nil {
+			fmt.Println(err)
+			// return nil, 0, err
+		}
 
-		// 失败或数据不存在-读库
+		// 读库
 		p1, err := NewPersonRepoReader()(context.TODO(), strconv.FormatInt(int64(id), 10))
 		if err != nil {
 			return nil, meta.OptionStatusBreak, err
 		}
 
+		expire := 10 * time.Second
+		if p1.Name == "" {
+			// 写入个空数据
+			expire = 2 * time.Second
+		}
 		// 写缓存
-		err = NewPersonCacheWriter()(context.TODO(), p1)
+		err = NewPersonCacheWriter()(context.TODO(), p1, expire)
 		if err != nil {
 			fmt.Println("redis write erro")
 		}
+		// 删除锁
+		locker.Deleter(ctx, strconv.Itoa(p.ID))
 
 		// 返回结果
 		return p, meta.OptionStatusContinue, nil

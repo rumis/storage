@@ -12,10 +12,12 @@ import (
 var defaultLockerPrefix = "tal_jiaoyan_storage_locker_"
 
 // DefaultRedisLocker 创建基于Redis的分布式锁
-func DefaultRedisLocker(client *redis.Client) locker.Locker {
+func DefaultRedisLocker(client *redis.Client, biz string) locker.Locker {
+	prefix := defaultLockerPrefix + biz + "_"
 	return locker.NewLocker(
-		locker.WithLockerReader(RedisLockerReader(NewRedisKeyValueStringReader(WithClient(client), WithPrefix(defaultLockerPrefix)))),
-		locker.WithLockerWriter(RedisLockerWriter(NewRedisKeyValueWriter(WithClient(client), WithPrefix(defaultLockerPrefix)), locker.DefaultExpire)),
+		locker.WithLockerReader(RedisLockerReader(NewRedisKeyValueStringReader(WithClient(client), WithPrefix(prefix)))),
+		locker.WithLockerWriter(RedisLockerWriter(NewRedisKeyValueWriter(WithClient(client), WithPrefix(prefix)), locker.DefaultExpire)),
+		locker.WithLockerDeleter(RedisLockerDeleter(NewRedisKeyValueDeleter(WithClient(client), WithPrefix(prefix)))),
 	)
 }
 
@@ -39,5 +41,13 @@ func RedisLockerReader(r RedisKeyValueStringReader) locker.LockerReader {
 			return "", errors.New("locker value type error")
 		}
 		return sval, nil
+	}
+}
+
+// RedisLockerDeleter
+func RedisLockerDeleter(d RedisKeyValueDeleter) locker.LockerDeleter {
+	return func(ctx context.Context, key string) error {
+		err := d(ctx, key)
+		return err
 	}
 }

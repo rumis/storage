@@ -189,3 +189,72 @@ func NewRedisKeyValueObjectReader(hands ...RedisOptionHandler) RedisKeyValueObje
 		}
 	}
 }
+
+// NewRedisKeyValueDeleter 缓存删除
+func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
+	// 默认配置
+	opts := DefaultRedisOptions()
+	// 自定义配置设置
+	for _, hand := range hands {
+		hand(&opts)
+	}
+	return func(ctx context.Context, params interface{}) error {
+		if opts.Client == nil {
+			return ErrClientNil
+		}
+		switch vals := params.(type) {
+		case string:
+			if opts.Prefix == "" {
+				return ErrPrefixNil
+			}
+			err := opts.Client.Del(ctx, opts.Prefix+vals).Err()
+			if err != nil {
+				return err
+			}
+		case []string:
+			if opts.Prefix == "" {
+				return ErrPrefixNil
+			}
+			for i := range vals {
+				vals[i] = opts.Prefix + vals[i]
+			}
+			err := opts.Client.Del(ctx, vals...).Err()
+			if err != nil {
+				return err
+			}
+		case storage.ForEach:
+			if opts.KeyFn == nil {
+				return ErrKeyFnNil
+			}
+			keys := make([]string, 0)
+			err := vals.ForEach(func(item interface{}) error {
+				key, err := opts.KeyFn(item)
+				if err != nil {
+					return err
+				}
+				keys = append(keys, key)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+			err = opts.Client.Del(ctx, keys...).Err()
+			if err != nil {
+				return err
+			}
+		default:
+			if opts.KeyFn == nil {
+				return ErrKeyFnNil
+			}
+			key, err := opts.KeyFn(vals)
+			if err != nil {
+				return err
+			}
+			err = opts.Client.Del(ctx, key).Err()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}

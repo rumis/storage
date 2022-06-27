@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-
-	"github.com/rumis/storage/locker"
 )
 
 // Pair 键值对
@@ -42,7 +40,6 @@ type RedisOptions struct {
 	KeyFn  RedisKeyGenerator
 	Prefix string
 	Client *redis.Client
-	Locker locker.Locker
 }
 
 // RedisOptionHandler 配置选项
@@ -71,13 +68,6 @@ func WithClient(client *redis.Client) RedisOptionHandler {
 func WithPrefix(pre string) RedisOptionHandler {
 	return func(opts *RedisOptions) {
 		opts.Prefix = pre
-	}
-}
-
-// WithPrefix 配置KEY前缀
-func WithLocker(l locker.Locker) RedisOptionHandler {
-	return func(opts *RedisOptions) {
-		opts.Locker = l
 	}
 }
 
