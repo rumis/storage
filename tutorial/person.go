@@ -22,6 +22,13 @@ type Person struct {
 	Age  int    `json:"age" seal:"age"`
 }
 
+func (p *Person) Zero() bool {
+	return p.ID == 0
+}
+
+// 表名，缓存前缀
+
+// NewPersonCacheReader
 func NewPersonCacheReader() func(ctx context.Context, id string) (Person, error) {
 	r := scache.NewRedisKeyValueObjectReader(scache.WithClient(scache.DefaultClient()), scache.WithKeyFn(func(params interface{}) (string, error) {
 		p, ok := params.(Person)
@@ -75,6 +82,7 @@ func NewPersonRepoReader() func(ctx context.Context, id string) (Person, error) 
 }
 
 // 常规-缓存-数据库数据获取流程
+// 读缓存-读锁-写锁-删锁-读库-写缓存
 func NewNormalFlow() storage.DataHandler {
 	return func(ctx context.Context, params interface{}) (interface{}, meta.OptionStatus, error) {
 		id, ok := params.(int)
