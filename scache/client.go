@@ -33,7 +33,7 @@ func SetDefaultClient(c *redis.Client) {
 	inst = c
 }
 
-// Get 获取Redis池链接
+// GetClient 获取Redis池链接中的链接
 func GetClient(name string) (*redis.Client, error) {
 	s, ok := servers.Load(name)
 	if !ok {
@@ -46,7 +46,7 @@ func GetClient(name string) (*redis.Client, error) {
 	return c, nil
 }
 
-// NewClient 初始化
+// NewClient 初始化 创建新的Redis链接
 // 默认会加入连接池
 func NewClient(cfg Config) (*redis.Client, error) {
 	if cfg.PoolSize < 3 {
@@ -70,7 +70,7 @@ func NewClient(cfg Config) (*redis.Client, error) {
 	return newc, nil
 }
 
-// 创建默认的Redis链接
+// NewDefaultClient 创建默认的Redis链接
 func NewDefaultClient(cfg Config) error {
 	defaultClient, err := NewClient(cfg)
 	if err != nil {

@@ -92,17 +92,17 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 	}
 }
 
-// NewRedisListReader 创建新的Redis队列读取对象
-func NewRedisListReader(hands ...RedisOptionHandler) RedisListReader {
+// NewRedisListReader 创建新的Redis队列读取，读取器返回值为字符串
+func NewRedisListStringReader(hands ...RedisOptionHandler) RedisListStringReader {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
 	for _, hand := range hands {
 		hand(&opts)
 	}
-	return func(ctx context.Context) (interface{}, error) {
+	return func(ctx context.Context) (string, error) {
 		if opts.Client == nil {
-			return nil, ErrClientNil
+			return "", ErrClientNil
 		}
 		elem, err := opts.Client.LPop(ctx, opts.Prefix).Result()
 		if err == redis.Nil {
@@ -112,5 +112,24 @@ func NewRedisListReader(hands ...RedisOptionHandler) RedisListReader {
 			return "", err
 		}
 		return elem, nil
+	}
+}
+
+// NewRedisListObjectReader 创建新的Redis List对象读取，读取器返回值为对象
+func NewRedisListObjectReader(hands ...RedisOptionHandler) RedisListObjectReader {
+	strReader := NewRedisListStringReader(hands...)
+	return func(ctx context.Context, data interface{}) error {
+		elem, err := strReader(ctx)
+		if err != nil {
+			return err
+		}
+		if elem == "" {
+			return nil
+		}
+		err = ujson.Unmarshal([]byte(elem), data)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 }

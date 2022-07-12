@@ -5,15 +5,25 @@ import (
 	"time"
 )
 
+// DefaultExpire 默认超时时间 200ms
 var DefaultExpire time.Duration = time.Millisecond * 200
+
+// DefaultRetryTimes 默认重试次数 3次
 var DefaultRetryTimes int = 3
+
+// DefaultRetrySpan 默认重试间隔 70ms
 var DefaultRetrySpan time.Duration = time.Microsecond * 70
 
+// LockerWriter 生成锁
 type LockerWriter func(ctx context.Context, key string) error
+
+// LockerReader 读取锁
 type LockerReader func(ctx context.Context, key string) (string, error)
+
+// LockerDeleter 删除锁
 type LockerDeleter func(ctx context.Context, key string) error
 
-// LockerOptionHandler 数据库配置选项
+// LockerOptionHandler 读取锁配置选项
 type LockerOptionHandler func(*Locker)
 
 // Locker 数据库读锁

@@ -32,8 +32,11 @@ type RedisKeyGenerator func(interface{}) (string, error)
 // Redis List类型写入
 type RedisListWriter func(context.Context, interface{}) error
 
-// Redis List类型读取
-type RedisListReader func(context.Context) (interface{}, error)
+// RedisListStringReader Redis List类型读取，返回结果为字符串
+type RedisListStringReader func(context.Context) (string, error)
+
+// RedisListObjectReader Redis List类型读取，返回结果为对象
+type RedisListObjectReader func(context.Context, interface{}) error
 
 // 选项
 type RedisOptions struct {

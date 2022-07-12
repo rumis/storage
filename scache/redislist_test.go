@@ -35,13 +35,12 @@ func TestRedisList(t *testing.T) {
 	}
 
 	// 普通字符串读取
-	reader1 := NewRedisListReader(WithClient(rClient), WithPrefix("test_list_v2_"))
+	reader1 := NewRedisListStringReader(WithClient(rClient), WithPrefix("test_list_v2_"))
 	x1, err := reader1(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t1, ok := x1.(string)
-	if !ok || t1 != "t1" {
+	if x1 != "t1" {
 		t.Fatal("read error t1")
 	}
 
@@ -49,8 +48,7 @@ func TestRedisList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t2, ok := x2.(string)
-	if !ok || t2 != "t2" {
+	if x2 != "t2" {
 		t.Fatal("read error t3")
 	}
 
@@ -58,8 +56,7 @@ func TestRedisList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t3, ok := x3.(string)
-	if !ok || t3 != "t3" {
+	if x3 != "t3" {
 		t.Fatal("read error t3")
 	}
 
@@ -67,8 +64,7 @@ func TestRedisList(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	tEmpty, ok := xEmpty.(string)
-	if !ok || tEmpty != "" {
+	if xEmpty != "" {
 		t.Fatal("read error empty")
 	}
 
@@ -80,33 +76,30 @@ func TestRedisList(t *testing.T) {
 	writer1(ctx, []Pair{kv1, kv2})
 	writer1(ctx, kv3)
 
-	rK1 := NewRedisListReader(WithClient(rClient), WithPrefix("test_list_v2_k1"))
-	rK2 := NewRedisListReader(WithClient(rClient), WithPrefix("test_list_v2_k2"))
+	rK1 := NewRedisListStringReader(WithClient(rClient), WithPrefix("test_list_v2_k1"))
+	rK2 := NewRedisListStringReader(WithClient(rClient), WithPrefix("test_list_v2_k2"))
 
-	xv1, err := rK1(ctx)
+	v1, err := rK1(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v1, ok := xv1.(string)
-	if !ok || v1 != kv1.Value {
+	if v1 != kv1.Value {
 		t.Fatal("read error kv1")
 	}
 
-	xv2, err := rK2(ctx)
+	v2, err := rK2(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v2, ok := xv2.(string)
-	if !ok || v2 != kv2.Value {
+	if v2 != kv2.Value {
 		t.Fatal("read error kv1")
 	}
 
-	xv3, err := rK2(ctx)
+	v3, err := rK2(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	v3, ok := xv3.(string)
-	if !ok || v3 != kv3.Value {
+	if v3 != kv3.Value {
 		t.Fatal("read error kv1")
 	}
 
@@ -121,17 +114,13 @@ func TestRedisList(t *testing.T) {
 	objWriter(ctx, s1)
 	objWriter(ctx, Students{s2, s3})
 
-	objReader := NewRedisListReader(WithClient(rClient), WithPrefix("test_list_object_student"))
+	objReader := NewRedisListStringReader(WithClient(rClient), WithPrefix("test_list_object_student"))
 
 	outS := make(Students, 0)
 	for {
-		xo, err := objReader(ctx)
+		o, err := objReader(ctx)
 		if err != nil {
 			t.Fatal(err)
-		}
-		o, ok := xo.(string)
-		if !ok {
-			t.Fatal("read error out")
 		}
 		if o == "" {
 			break
