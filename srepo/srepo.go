@@ -52,14 +52,21 @@ func WithColumns(columns []string) RepoOptionHandler {
 	}
 }
 
-// SQL子句处理方法
-type ClauseHandler func(interface{})
+// ClauseHandler SQL子句处理方法
+// @params query 查询器对象或者TX、DB等
+type ClauseHandler func(query interface{})
 
-// 数据插入
-type RepoInserter func(context.Context, interface{}) (int64, error)
+// RepoInserter 数据插入
+// @params data 需要插入的数据，支持单个数据或者数组
+type RepoInserter func(ctx context.Context, data interface{}) (int64, error)
 
-// 数据更新
-type RepoUpdater func(context.Context, interface{}, ...ClauseHandler) (int64, error)
+// RepoUpdater 数据更新
+// @params data 需要更新的数据，支持map和struct
+// @parama where 更新数据的条件
+// @return 最后一个自增ID的值
+type RepoUpdater func(ctx context.Context, data interface{}, where ...ClauseHandler) (int64, error)
 
-// 数据读取
-type RepoReader func(context.Context, interface{}, ...ClauseHandler) error
+// RepoReader 数据读取
+// @params data 承载数据的指针
+// @params where 查询字句
+type RepoReader func(ctx context.Context, data interface{}, where ...ClauseHandler) error
