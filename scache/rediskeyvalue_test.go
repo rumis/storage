@@ -7,8 +7,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redis/v8"
-
-	"github.com/rumis/storage"
+	"github.com/rumis/storage/meta"
 )
 
 func TestRedisKV(t *testing.T) {
@@ -155,7 +154,7 @@ type Person struct {
 type Persons []Person
 
 // 遍历
-func (p Persons) ForEach(fn storage.Iterator) error {
+func (p Persons) ForEach(fn meta.Iterator) error {
 	for _, v := range p {
 		err := fn(v)
 		if err != nil {

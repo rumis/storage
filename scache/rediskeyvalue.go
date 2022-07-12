@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage"
+	"github.com/rumis/storage/meta"
 	"github.com/rumis/storage/pkg/ujson"
 )
 
@@ -41,7 +41,7 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 					return err
 				}
 			}
-		case storage.ForEach:
+		case meta.ForEach:
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
 			}
@@ -142,7 +142,7 @@ func NewRedisKeyValueObjectReader(hands ...RedisOptionHandler) RedisKeyValueObje
 			return ErrClientNil
 		}
 		switch keys := params.(type) {
-		case storage.ForEach:
+		case meta.ForEach:
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
 			}
@@ -222,7 +222,7 @@ func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
 			if err != nil {
 				return err
 			}
-		case storage.ForEach:
+		case meta.ForEach:
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
 			}

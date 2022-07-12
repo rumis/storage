@@ -1,4 +1,4 @@
-package tutorial
+package storage
 
 import (
 	"context"
@@ -7,20 +7,15 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/seal"
-	"github.com/rumis/seal/query"
 	"github.com/rumis/storage/locker"
+	"github.com/rumis/storage/meta"
 	"github.com/rumis/storage/pkg/ujson"
 	"github.com/rumis/storage/scache"
 	"github.com/rumis/storage/srepo"
 )
 
-type Zero interface {
-	Zero() bool
-}
-
-// NewGenericCacheReader 通用缓存读取
-func NewGenericCacheReader(prefix string) scache.RedisKeyValueObjectReader {
+// NewOneCacheReader 缓存对象读取
+func NewOneCacheReader(prefix string) scache.RedisKeyValueObjectReader {
 	r := scache.NewRedisKeyValueStringReader(scache.WithClient(scache.DefaultClient()), scache.WithPrefix(prefix))
 	return func(ctx context.Context, params interface{}, out interface{}) error {
 		res, err := r(ctx, fmt.Sprint(params))
@@ -39,8 +34,8 @@ func NewGenericCacheReader(prefix string) scache.RedisKeyValueObjectReader {
 	}
 }
 
-// NewGenericCacheWriter 通用缓存写入
-func NewGenericCacheWriter(prefix string) func(ctx context.Context, kv scache.Pair, expire time.Duration) error {
+// NewOneCacheWriter 缓存对象写入
+func NewOneCacheWriter(prefix string) func(ctx context.Context, kv scache.Pair, expire time.Duration) error {
 	w := scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()), scache.WithPrefix(prefix))
 	return func(ctx context.Context, kv scache.Pair, expire time.Duration) error {
 		err := w(ctx, kv, expire)
@@ -48,8 +43,8 @@ func NewGenericCacheWriter(prefix string) func(ctx context.Context, kv scache.Pa
 	}
 }
 
-// NewGenericRepoReader 通用数据库读取
-func NewGenericRepoReader(tableName string, columns []string) func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
+// NewOneRepoReader 通用数据库读取
+func NewOneRepoReader(tableName string, columns []string) func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
 	r := srepo.NewSealMysqlOneReader(srepo.WithName(tableName), srepo.WithDB(srepo.SealR()), srepo.WithColumns(columns))
 	return func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
 		err := r(ctx, out, hand...)
@@ -57,32 +52,21 @@ func NewGenericRepoReader(tableName string, columns []string) func(ctx context.C
 	}
 }
 
-// NewKeyValueClauseHandler 查询匹配条件
-func NewEqClauseHandler(key string, val interface{}) srepo.ClauseHandler {
-	return func(q interface{}) {
-		sq, ok := q.(*query.SelectQuery)
-		if !ok {
-			return
-		}
-		sq.Where(seal.Eq(key, val))
-	}
-}
-
-// NewGenericLocker 通用锁
-func NewGenericLocker(biz string) locker.Locker {
+// NewDefaultLocker 默认通用锁
+func NewDefaultLocker(biz string) locker.Locker {
 	return scache.DefaultRedisLocker(scache.DefaultClient(), biz)
 }
 
-// NewGenericReader 通用缓存-库数据读取器
-func NewGenericReader(prefix string, tablename string, columns []string, biz string, opts ...srepo.ClauseHandler) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}) error {
-	cacheReader := NewGenericCacheReader(prefix)
-	cacheWriter := NewGenericCacheWriter(prefix)
-	repoReader := NewGenericRepoReader(tablename, columns)
-	locker := NewGenericLocker(biz)
-	return func(ctx context.Context, params interface{}, expire time.Duration, out interface{}) error {
-		zero, ok := out.(Zero)
+// NewOneCacheRepoReader 通用缓存-库数据读取器,单对象
+func NewOneCacheRepoReader(prefix string, tablename string, columns []string, biz string) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
+	cacheReader := NewOneCacheReader(prefix)
+	cacheWriter := NewOneCacheWriter(prefix)
+	repoReader := NewOneRepoReader(tablename, columns)
+	locker := NewDefaultLocker(biz)
+	return func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
+		zero, ok := out.(meta.Zero)
 		if !ok {
-			return errors.New("out must implements Zero")
+			return errors.New("params out must implements Zero interface")
 		}
 		// 读取缓存
 		err := cacheReader(ctx, params, out)

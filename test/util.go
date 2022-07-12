@@ -1,8 +1,6 @@
-package tutorial
+package test
 
 import (
-	"testing"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redis/v8"
@@ -13,11 +11,11 @@ import (
 )
 
 // InitClient 初始化
-func InitClient(t *testing.T) sqlmock.Sqlmock {
+func InitClient() sqlmock.Sqlmock {
 	// 启动内存Redis服务并创建Client
 	server, err := miniredis.Run()
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	rClient := redis.NewClient(&redis.Options{
 		Addr: server.Addr(),
@@ -27,11 +25,11 @@ func InitClient(t *testing.T) sqlmock.Sqlmock {
 	// 数据库
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	sealDb, err := seal.OpenWithDB(db, builder.NewMysqlBuilder())
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	srepo.SetSealR(sealDb)
 	srepo.SetSealW(sealDb)

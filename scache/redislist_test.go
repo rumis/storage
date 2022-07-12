@@ -6,7 +6,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage"
+	"github.com/rumis/storage/meta"
 	"github.com/rumis/storage/pkg/ujson"
 )
 
@@ -151,7 +151,7 @@ type Student struct {
 type Students []Student
 
 // 遍历
-func (s Students) ForEach(fn storage.Iterator) error {
+func (s Students) ForEach(fn meta.Iterator) error {
 	for _, v := range s {
 		err := fn(v)
 		if err != nil {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage"
+	"github.com/rumis/storage/meta"
 	"github.com/rumis/storage/pkg/ujson"
 )
 
@@ -49,7 +49,7 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 				}
 			}
 			return nil
-		case storage.ForEach:
+		case meta.ForEach:
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
 			}
