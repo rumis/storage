@@ -12,3 +12,8 @@ type ForEach interface {
 type Zero interface {
 	Zero() bool
 }
+
+// Key 获取对象的KEY
+type Key interface {
+	Key() string
+}

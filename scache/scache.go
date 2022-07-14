@@ -15,19 +15,19 @@ type Pair struct {
 }
 
 // Redis K-V类型读取
-type RedisKeyValueObjectReader func(context.Context, interface{}, interface{}) error
+type RedisKeyValueObjectReader func(ctx context.Context, params interface{}, out interface{}) error
 
 // Redis K-V类型读取
-type RedisKeyValueStringReader func(context.Context, interface{}) (interface{}, error)
+type RedisKeyValueStringReader func(ctx context.Context, params interface{}) (interface{}, error)
 
 // Redis K-V类型写入
-type RedisKeyValueWriter func(context.Context, interface{}, time.Duration) error
+type RedisKeyValueWriter func(ctx context.Context, params interface{}, expire time.Duration) error
 
 // Redis K-V类型删除
-type RedisKeyValueDeleter func(context.Context, interface{}) error
+type RedisKeyValueDeleter func(ctx context.Context, param interface{}) error
 
 // RedisKeyGenerator Redis Key生成
-type RedisKeyGenerator func(interface{}) (string, error)
+type RedisKeyGenerator func(param interface{}) (string, error)
 
 // Redis List类型写入
 type RedisListWriter func(context.Context, interface{}) error
