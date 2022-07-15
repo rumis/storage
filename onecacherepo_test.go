@@ -35,7 +35,7 @@ func TestOneCacheRepoReader(t *testing.T) {
 	genericReader := NewOneCacheRepoReader("tal_test_person_", "tal_test_person", []string{"id", "name", "age"}, "person")
 
 	var p test.Person
-	err = genericReader(context.TODO(), 1, time.Second*10, &p, srepo.NewSealEqClause("id", 1))
+	err = genericReader(context.TODO(), 1, time.Second*10, &p, srepo.SealQEq("id", 1))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func BenchmarkOneCacheRepoReader(b *testing.B) {
 		// 读取
 		genericReader := NewOneCacheRepoReader("tal_test_person_", "tal_test_person", []string{"id", "name", "age"}, "person")
 		var p test.Person
-		err = genericReader(context.TODO(), 1, time.Second*1, &p, srepo.NewSealEqClause("id", 1))
+		err = genericReader(context.TODO(), 1, time.Second*1, &p, srepo.SealQEq("id", 1))
 		if err != nil {
 			fmt.Println(err)
 		}
