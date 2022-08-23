@@ -31,7 +31,6 @@ func NewReaderChannel(opts ...KafkaReaderOptionHandler) (chan kafka.Message, Clo
 				continue
 			}
 			if err != nil {
-				// todo logger
 				continue
 			}
 			msgCh <- m

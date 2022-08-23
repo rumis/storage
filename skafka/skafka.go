@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"sync"
 
+	"github.com/rumis/storage/meta"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
 )
@@ -155,6 +156,20 @@ func R_WithMaxBytes(bcnt int) KafkaReaderOptionHandler {
 	}
 }
 
+// R_WithLogger 读取器 日志
+func R_WithLogger(fn meta.KafkaLoggerFunc) KafkaReaderOptionHandler {
+	return func(rc *kafka.ReaderConfig) {
+		rc.Logger = kafka.LoggerFunc(fn)
+	}
+}
+
+// R_WithErrorLogger 读取器 错误日志
+func R_WithErrorLogger(fn meta.KafkaLoggerFunc) KafkaReaderOptionHandler {
+	return func(rc *kafka.ReaderConfig) {
+		rc.ErrorLogger = kafka.LoggerFunc(fn)
+	}
+}
+
 // 写入器配置设置
 // DefaultWriterConfig 默认写入器器配置
 func DefaultWriterConfig() *kafka.WriterConfig {
@@ -185,9 +200,23 @@ func W_WithTopic(topic string) KafkaWriterOptionHandler {
 	}
 }
 
-// W_WithBatchBytes 读取器 配置批量发送字节数上限
+// W_WithBatchBytes 写入器 配置批量发送字节数上限
 func W_WithBatchBytes(bcnt int) KafkaWriterOptionHandler {
 	return func(wc *kafka.WriterConfig) {
 		wc.BatchBytes = bcnt
+	}
+}
+
+// W_WithLogger 写入器 日志
+func W_WithLogger(fn meta.KafkaLoggerFunc) KafkaWriterOptionHandler {
+	return func(wc *kafka.WriterConfig) {
+		wc.Logger = kafka.LoggerFunc(fn)
+	}
+}
+
+// W_WithErrorLogger 写入器 错误日志
+func W_WithErrorLogger(fn meta.KafkaLoggerFunc) KafkaWriterOptionHandler {
+	return func(wc *kafka.WriterConfig) {
+		wc.ErrorLogger = kafka.LoggerFunc(fn)
 	}
 }

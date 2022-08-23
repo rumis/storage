@@ -21,3 +21,9 @@ func ConsoleRedisExecLogFunc(ctx context.Context, ts time.Duration, args interfa
 	traceId := ctx.Value(DefaultTraceKey)
 	fmt.Printf("redis command log: \n  trace:%v\n  args:%+v \n  timespan:%dns \n  error:%+v\n \n", traceId, args, ts.Nanoseconds(), err)
 }
+
+// KafkaLoggerFunc is called each time when read or write a message
+
+// 	msg: 消息
+// 	args: 参数
+type KafkaLoggerFunc func(msg string, args ...interface{})
