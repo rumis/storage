@@ -19,68 +19,77 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 		hand(&opts)
 	}
 	return func(ctx context.Context, params interface{}, expiration time.Duration) error {
+		startTime := time.Now()
 		if opts.Client == nil {
-			return ErrClientNil
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
 		}
 		switch vals := params.(type) {
 		case Pair:
 			if opts.Prefix == "" {
-				return ErrPrefixNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
-			err := opts.Client.Set(ctx, opts.Prefix+vals.Key, vals.Value, expiration).Err()
+			cmd := opts.Client.Set(ctx, opts.Prefix+vals.Key, vals.Value, expiration)
+			err := cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		case []Pair:
 			if opts.Prefix == "" {
-				return ErrPrefixNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
 			for _, val := range vals {
-				err := opts.Client.Set(ctx, opts.Prefix+val.Key, val.Value, expiration).Err()
+				startTime = time.Now()
+				cmd := opts.Client.Set(ctx, opts.Prefix+val.Key, val.Value, expiration)
+				err := cmd.Err()
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 				}
+				ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 			}
 		case meta.ForEach:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			err := vals.ForEach(func(item interface{}) error {
 				key, err := opts.KeyFn(item)
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 				}
 				val, err := ujson.Marshal(item)
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 				}
-				err = opts.Client.Set(ctx, key, string(val), expiration).Err()
+				cmd := opts.Client.Set(ctx, key, string(val), expiration)
+				err = cmd.Err()
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 				}
-				return nil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 			})
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
 		default:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			key, err := opts.KeyFn(vals)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
 			val, err := ujson.Marshal(vals)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
-			err = opts.Client.Set(ctx, key, string(val), expiration).Err()
+			cmd := opts.Client.Set(ctx, key, string(val), expiration)
+			err = cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		}
-		return nil
+		return ExecLogError(ctx, opts.ExecLogFn, startTime, params, nil)
 	}
 }
 
@@ -93,38 +102,42 @@ func NewRedisKeyValueStringReader(hands ...RedisOptionHandler) RedisKeyValueStri
 		hand(&opts)
 	}
 	return func(ctx context.Context, params interface{}) (interface{}, error) {
+		startTime := time.Now()
 		if opts.Client == nil {
-			return nil, ErrClientNil
+			return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
 		}
 		switch keys := params.(type) {
 		case string:
 			if opts.Prefix == "" {
-				return nil, ErrPrefixNil
+				return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
-			res, err := opts.Client.Get(ctx, opts.Prefix+keys).Result()
+			cmd := opts.Client.Get(ctx, opts.Prefix+keys)
+			res, err := cmd.Result()
 			if err != nil {
-				return nil, err
+				return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
-			return res, nil
+			return res, ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		case []string:
 			if opts.Prefix == "" {
-				return nil, ErrPrefixNil
+				return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
 			allRes := make([]string, 0, len(keys))
 			for _, key := range keys {
-				res, err := opts.Client.Get(ctx, opts.Prefix+key).Result()
+				cmd := opts.Client.Get(ctx, opts.Prefix+key)
+				res, err := cmd.Result()
 				if err == redis.Nil {
 					allRes = append(allRes, res)
 					continue
 				}
 				if err != nil {
-					return nil, err
+					return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 				}
 				allRes = append(allRes, res)
+				ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 			}
-			return allRes, nil
+			return allRes, ExecLogError(ctx, opts.ExecLogFn, startTime, params, nil)
 		default:
-			return nil, ErrKeyFormat
+			return nil, ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFormat)
 		}
 	}
 }
@@ -138,54 +151,58 @@ func NewRedisKeyValueObjectReader(hands ...RedisOptionHandler) RedisKeyValueObje
 		hand(&opts)
 	}
 	return func(ctx context.Context, params interface{}, data interface{}) error {
+		startTime := time.Now()
 		if opts.Client == nil {
-			return ErrClientNil
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
 		}
 		switch keys := params.(type) {
 		case meta.ForEach:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			allRes := make([]string, 0)
 			err := keys.ForEach(func(item interface{}) error {
 				key, err := opts.KeyFn(item)
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 				}
-				res, err := opts.Client.Get(ctx, key).Result()
+				startTime = time.Now()
+				cmd := opts.Client.Get(ctx, key)
+				res, err := cmd.Result()
 				if err != nil {
-					return err
+					return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 				}
 				allRes = append(allRes, res)
-				return nil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 			})
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
 			// 拼接为数组
 			totalRes := "[" + strings.Join(allRes, ",") + "]"
 			err = ujson.Unmarshal([]byte(totalRes), data)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
-			return nil
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, nil)
 		default:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			key, err := opts.KeyFn(keys)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
-			res, err := opts.Client.Get(ctx, key).Result()
+			cmd := opts.Client.Get(ctx, key)
+			res, err := cmd.Result()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
 			err = ujson.Unmarshal([]byte(res), data)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
-			return nil
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, nil)
 		}
 	}
 }
@@ -199,32 +216,37 @@ func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
 		hand(&opts)
 	}
 	return func(ctx context.Context, params interface{}) error {
+		startTime := time.Now()
 		if opts.Client == nil {
-			return ErrClientNil
+			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
 		}
 		switch vals := params.(type) {
 		case string:
 			if opts.Prefix == "" {
-				return ErrPrefixNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
-			err := opts.Client.Del(ctx, opts.Prefix+vals).Err()
+			cmd := opts.Client.Del(ctx, opts.Prefix+vals)
+			err := cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		case []string:
 			if opts.Prefix == "" {
-				return ErrPrefixNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
 			}
 			for i := range vals {
 				vals[i] = opts.Prefix + vals[i]
 			}
-			err := opts.Client.Del(ctx, vals...).Err()
+			cmd := opts.Client.Del(ctx, vals...)
+			err := cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		case meta.ForEach:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			keys := make([]string, 0)
 			err := vals.ForEach(func(item interface{}) error {
@@ -236,24 +258,28 @@ func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
 				return nil
 			})
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
-			err = opts.Client.Del(ctx, keys...).Err()
+			cmd := opts.Client.Del(ctx, keys...)
+			err = cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		default:
 			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+				ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
 			}
 			key, err := opts.KeyFn(vals)
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
 			}
-			err = opts.Client.Del(ctx, key).Err()
+			cmd := opts.Client.Del(ctx, key)
+			err = cmd.Err()
 			if err != nil {
-				return err
+				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		}
 		return nil
 	}

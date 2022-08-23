@@ -12,7 +12,7 @@ import (
 
 func TestRedisKV(t *testing.T) {
 
-	ctx := context.TODO()
+	ctx := context.WithValue(context.Background(), meta.DefaultTraceKey, "asdf")
 
 	// 启动内存Redis服务并创建Client
 	server, err := miniredis.Run()
@@ -23,7 +23,10 @@ func TestRedisKV(t *testing.T) {
 		Addr: server.Addr(),
 	})
 
-	writer := NewRedisKeyValueWriter(WithClient(rClient), WithPrefix("test_v1_"))
+	writer := NewRedisKeyValueWriter(
+		WithClient(rClient),
+		WithPrefix("test_v1_"),
+		WithExecLogger(meta.ConsoleRedisExecLogFunc))
 
 	// 写入单KV对象
 	kv1 := Pair{

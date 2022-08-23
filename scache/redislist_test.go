@@ -24,7 +24,10 @@ func TestRedisList(t *testing.T) {
 	})
 
 	// 普通字符串写入
-	writer1 := NewRedisListWriter(WithClient(rClient), WithPrefix("test_list_v2_"))
+	writer1 := NewRedisListWriter(
+		WithClient(rClient),
+		WithPrefix("test_list_v2_"),
+		WithExecLogger(meta.ConsoleRedisExecLogFunc))
 	err = writer1(ctx, "t1")
 	if err != nil {
 		t.Fatal(err)

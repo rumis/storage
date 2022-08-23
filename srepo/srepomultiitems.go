@@ -21,7 +21,7 @@ func NewSealMysqlMultiReader(hands ...RepoOptionHandler) RepoReader {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Query().AllStruct(data)
+			err := q.Query(ctx).AllStruct(data)
 			return err
 		}
 	}
@@ -32,7 +32,7 @@ func NewSealMysqlMultiReader(hands ...RepoOptionHandler) RepoReader {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Query().AllStruct(data)
+			err := q.Query(ctx).AllStruct(data)
 			return err
 		}
 	}

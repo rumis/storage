@@ -22,7 +22,7 @@ func NewSealMysqlUpdater(hands ...RepoOptionHandler) RepoUpdater {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Value(param).Exec(&affectCnt)
+			err := q.Value(param).Exec(ctx, &affectCnt)
 			return affectCnt, err
 		}
 	}
@@ -34,7 +34,7 @@ func NewSealMysqlUpdater(hands ...RepoOptionHandler) RepoUpdater {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Value(param).Exec(&affectCnt)
+			err := q.Value(param).Exec(ctx, &affectCnt)
 			return affectCnt, err
 		}
 	}

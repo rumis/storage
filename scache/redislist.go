@@ -2,6 +2,7 @@ package scache
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/rumis/storage/meta"
@@ -17,12 +18,17 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 		hand(&opts)
 	}
 	return func(ctx context.Context, params interface{}) error {
+		startTime := time.Now()
 		if opts.Client == nil {
 			return ErrClientNil
 		}
 		switch val := params.(type) {
 		case string:
-			_, err := opts.Client.RPush(ctx, opts.Prefix, val).Result()
+			cmd := opts.Client.RPush(ctx, opts.Prefix, val)
+			_, err := cmd.Result()
+			if opts.ExecLogFn != nil {
+				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+			}
 			if err != nil {
 				return err
 			}
@@ -31,24 +37,35 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 			for _, v := range val {
 				ivals = append(ivals, v)
 			}
-			_, err := opts.Client.RPush(ctx, opts.Prefix, ivals...).Result()
+			cmd := opts.Client.RPush(ctx, opts.Prefix, ivals...)
+			_, err := cmd.Result()
+			if opts.ExecLogFn != nil {
+				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+			}
 			if err != nil {
 				return err
 			}
-			return nil
 		case Pair:
-			_, err := opts.Client.RPush(ctx, opts.Prefix+val.Key, val.Value).Result()
+			cmd := opts.Client.RPush(ctx, opts.Prefix+val.Key, val.Value)
+			_, err := cmd.Result()
+			if opts.ExecLogFn != nil {
+				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+			}
 			if err != nil {
 				return err
 			}
 		case []Pair:
 			for _, v := range val {
-				_, err := opts.Client.RPush(ctx, opts.Prefix+v.Key, v.Value).Result()
+				startTime = time.Now()
+				cmd := opts.Client.RPush(ctx, opts.Prefix+v.Key, v.Value)
+				_, err := cmd.Result()
+				if opts.ExecLogFn != nil {
+					opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+				}
 				if err != nil {
 					return err
 				}
 			}
-			return nil
 		case meta.ForEach:
 			if opts.KeyFn == nil {
 				return ErrKeyFnNil
@@ -62,11 +79,13 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 				if err != nil {
 					return err
 				}
-				_, err = opts.Client.RPush(ctx, key, string(val)).Result()
-				if err != nil {
-					return err
+				startTime = time.Now()
+				cmd := opts.Client.RPush(ctx, key, string(val))
+				_, err = cmd.Result()
+				if opts.ExecLogFn != nil {
+					opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
 				}
-				return nil
+				return err
 			})
 			if err != nil {
 				return err
@@ -83,7 +102,11 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 			if err != nil {
 				return err
 			}
-			_, err = opts.Client.RPush(ctx, key, string(buf)).Result()
+			cmd := opts.Client.RPush(ctx, key, string(buf))
+			_, err = cmd.Result()
+			if opts.ExecLogFn != nil {
+				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+			}
 			if err != nil {
 				return err
 			}
@@ -104,7 +127,14 @@ func NewRedisListStringReader(hands ...RedisOptionHandler) RedisListStringReader
 		if opts.Client == nil {
 			return "", ErrClientNil
 		}
-		elem, err := opts.Client.LPop(ctx, opts.Prefix).Result()
+		startTime := time.Now()
+		// Exec
+		cmd := opts.Client.LPop(ctx, opts.Prefix)
+		elem, err := cmd.Result()
+		// Log
+		if opts.ExecLogFn != nil {
+			opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
+		}
 		if err == redis.Nil {
 			return "", nil
 		}

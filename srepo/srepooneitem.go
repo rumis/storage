@@ -21,7 +21,7 @@ func NewSealMysqlOneReader(hands ...RepoOptionHandler) RepoReader {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Limit(1).Query().OneStruct(&data)
+			err := q.Limit(1).Query(ctx).OneStruct(&data)
 			return err
 		}
 	}
@@ -32,7 +32,7 @@ func NewSealMysqlOneReader(hands ...RepoOptionHandler) RepoReader {
 			for _, v := range handler {
 				v(q)
 			}
-			err := q.Limit(1).Query().OneStruct(&data)
+			err := q.Limit(1).Query(ctx).OneStruct(&data)
 			return err
 		}
 	}

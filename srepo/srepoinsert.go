@@ -18,7 +18,7 @@ func NewSealMysqlInserter(hands ...RepoOptionHandler) RepoInserter {
 	if sealTx, ok := opts.TX.(*seal.Tx); ok {
 		return func(ctx context.Context, params interface{}) (int64, error) {
 			var lastId int64
-			err := sealTx.Insert(opts.Name).Value(params).Exec(&lastId)
+			err := sealTx.Insert(opts.Name).Value(params).Exec(ctx, &lastId)
 			return lastId, err
 		}
 	}
@@ -26,7 +26,7 @@ func NewSealMysqlInserter(hands ...RepoOptionHandler) RepoInserter {
 	if sealDb, ok := opts.DB.(seal.DB); ok {
 		return func(ctx context.Context, params interface{}) (int64, error) {
 			var lastId int64
-			err := sealDb.Insert(opts.Name).Value(params).Exec(&lastId)
+			err := sealDb.Insert(opts.Name).Value(params).Exec(ctx, &lastId)
 			return lastId, err
 		}
 	}
@@ -48,7 +48,7 @@ func NewSealMysqlMultiInserter(hands ...RepoOptionHandler) RepoInserter {
 	if sealTx, ok := opts.TX.(*seal.Tx); ok {
 		return func(ctx context.Context, params interface{}) (int64, error) {
 			var lastId int64
-			err := sealTx.Insert(opts.Name).Values(params).Exec(&lastId)
+			err := sealTx.Insert(opts.Name).Values(params).Exec(ctx, &lastId)
 			return lastId, err
 		}
 	}
@@ -56,7 +56,7 @@ func NewSealMysqlMultiInserter(hands ...RepoOptionHandler) RepoInserter {
 	if sealDb, ok := opts.DB.(seal.DB); ok {
 		return func(ctx context.Context, params interface{}) (int64, error) {
 			var lastId int64
-			err := sealDb.Insert(opts.Name).Values(params).Exec(&lastId)
+			err := sealDb.Insert(opts.Name).Values(params).Exec(ctx, &lastId)
 			return lastId, err
 		}
 	}
