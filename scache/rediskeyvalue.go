@@ -284,3 +284,57 @@ func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
 		return nil
 	}
 }
+
+func NewReaderSetNX(hands ...RedisOptionHandler) RedisKeyValueNX {
+	// 默认配置
+	opts := DefaultRedisOptions()
+	// 自定义配置设置
+	for _, hand := range hands {
+		hand(&opts)
+	}
+	return func(ctx context.Context, params interface{}, expiration time.Duration) bool {
+		startTime := time.Now()
+		if opts.Client == nil {
+			ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
+			return false
+		}
+		switch vals := params.(type) {
+		case Pair:
+			if opts.Prefix == "" {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrPrefixNil)
+				return false
+			}
+			cmd := opts.Client.SetNX(ctx, opts.Prefix+vals.Key, vals.Value, expiration)
+			err := cmd.Err()
+			if err != nil {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
+				return false
+			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
+			return cmd.Val()
+		default:
+			if opts.KeyFn == nil {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrKeyFnNil)
+				return false
+			}
+			key, err := opts.KeyFn(vals)
+			if err != nil {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
+				return false
+			}
+			val, err := ujson.Marshal(vals)
+			if err != nil {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, params, err)
+				return false
+			}
+			cmd := opts.Client.SetNX(ctx, key, string(val), expiration)
+			err = cmd.Err()
+			if err != nil {
+				ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
+				return false
+			}
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
+			return cmd.Val()
+		}
+	}
+}

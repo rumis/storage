@@ -14,11 +14,8 @@ var DefaultRetryTimes int = 3
 // DefaultRetrySpan 默认重试间隔 70ms
 var DefaultRetrySpan time.Duration = time.Microsecond * 70
 
-// LockerWriter 生成锁
-type LockerWriter func(ctx context.Context, key string) error
-
-// LockerReader 读取锁
-type LockerReader func(ctx context.Context, key string) (string, error)
+// LockerAdder 加锁
+type LockerAdder func(ctx context.Context, key string) bool
 
 // LockerDeleter 删除锁
 type LockerDeleter func(ctx context.Context, key string) error
@@ -28,8 +25,7 @@ type LockerOptionHandler func(*Locker)
 
 // Locker 数据库读锁
 type Locker struct {
-	Reader     LockerReader
-	Writer     LockerWriter
+	Adder      LockerAdder
 	Deleter    LockerDeleter
 	Expire     time.Duration
 	RetryTimes int
@@ -39,8 +35,7 @@ type Locker struct {
 // DefaultLocker 创建默认Locker对象
 func DefaultLocker() Locker {
 	return Locker{
-		Writer:     func(ctx context.Context, key string) error { return nil },
-		Reader:     func(ctx context.Context, key string) (string, error) { return "", nil },
+		Adder:      func(ctx context.Context, key string) bool { return false },
 		Deleter:    func(ctx context.Context, key string) error { return nil },
 		Expire:     DefaultExpire,
 		RetryTimes: DefaultRetryTimes,
@@ -57,17 +52,10 @@ func NewLocker(opts ...LockerOptionHandler) Locker {
 	return l
 }
 
-// WithLockerWriter 设置locker写入器
-func WithLockerWriter(w LockerWriter) LockerOptionHandler {
+// WithLockerAdder 加锁
+func WithLockerAdder(a LockerAdder) LockerOptionHandler {
 	return func(opts *Locker) {
-		opts.Writer = w
-	}
-}
-
-// WithLockerReader 设置locker读取器
-func WithLockerReader(r LockerReader) LockerOptionHandler {
-	return func(opts *Locker) {
-		opts.Reader = r
+		opts.Adder = a
 	}
 }
 

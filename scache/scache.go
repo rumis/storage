@@ -24,6 +24,9 @@ type RedisKeyValueStringReader func(ctx context.Context, params interface{}) (in
 // Redis K-V类型写入
 type RedisKeyValueWriter func(ctx context.Context, params interface{}, expire time.Duration) error
 
+// RedisKeyValueNX Redis SetNX
+type RedisKeyValueNX func(ctx context.Context, params interface{}, expire time.Duration) bool
+
 // Redis K-V类型删除
 //
 // 参数param支持以下4种类型:

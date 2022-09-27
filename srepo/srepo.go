@@ -70,3 +70,8 @@ type RepoUpdater func(ctx context.Context, data interface{}, where ...ClauseHand
 // @params data 承载数据的指针
 // @params where 查询字句
 type RepoReader func(ctx context.Context, data interface{}, where ...ClauseHandler) error
+
+// RepoGroupReader 多表数据读取
+// @params data 承载数据的指针
+// @params params 查询条件字段
+type RepoGroupReader func(ctx context.Context, data interface{}, params interface{}) error
