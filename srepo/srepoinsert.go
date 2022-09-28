@@ -7,9 +7,9 @@ import (
 )
 
 // NewSealMysqlInserter 创建新的Seal数据写入对象
-func NewSealMysqlInserter(hands ...RepoOptionHandler) RepoInserter {
+func NewSealMysqlInserter(hands ...RepoSealOptionHandler) RepoInserter {
 	// 默认配置
-	opts := DefaultRepoOptions()
+	opts := DefaultRepoSealOptions()
 	// 自定义配置设置
 	for _, fn := range hands {
 		fn(&opts)
@@ -37,9 +37,9 @@ func NewSealMysqlInserter(hands ...RepoOptionHandler) RepoInserter {
 }
 
 // NewSealMysqlMultiInserter 创建新的Seal数据写入对象-一次写入多次数据
-func NewSealMysqlMultiInserter(hands ...RepoOptionHandler) RepoInserter {
+func NewSealMysqlMultiInserter(hands ...RepoSealOptionHandler) RepoInserter {
 	// 默认配置
-	opts := DefaultRepoOptions()
+	opts := DefaultRepoSealOptions()
 	// 自定义配置设置
 	for _, fn := range hands {
 		fn(&opts)

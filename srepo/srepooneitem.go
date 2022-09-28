@@ -7,9 +7,9 @@ import (
 )
 
 // NewSealMysqlOneReader 创建新的Seal数据写入对象
-func NewSealMysqlOneReader(hands ...RepoOptionHandler) RepoReader {
+func NewSealMysqlOneReader(hands ...RepoSealOptionHandler) RepoReader {
 	// 默认配置
-	opts := DefaultRepoOptions()
+	opts := DefaultRepoSealOptions()
 	// 自定义配置设置
 	for _, fn := range hands {
 		fn(&opts)

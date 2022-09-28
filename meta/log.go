@@ -27,3 +27,12 @@ func ConsoleRedisExecLogFunc(ctx context.Context, ts time.Duration, args interfa
 // 	msg: 消息
 // 	args: 参数
 type KafkaLoggerFunc func(msg string, args ...interface{})
+
+// RepoExecLogFunc is called each time when read or write from database
+type RepoExecLogFunc func(ctx context.Context, ts time.Duration, args interface{}, err error)
+
+// ConsoleRedisExecLogFunc print the message to console
+func ConsoleMysqlExecLogFunc(ctx context.Context, ts time.Duration, args interface{}, err error) {
+	traceId := ctx.Value(DefaultTraceKey)
+	fmt.Printf("mysql log: \n  trace:%v\n  args:%+v \n  timespan:%dns \n  error:%+v\n \n", traceId, args, ts.Nanoseconds(), err)
+}

@@ -7,9 +7,9 @@ import (
 )
 
 // NewSealMysqlMultiReader 创建新的Seal数据读取对象，返回值多行
-func NewSealMysqlMultiReader(hands ...RepoOptionHandler) RepoReader {
+func NewSealMysqlMultiReader(hands ...RepoSealOptionHandler) RepoReader {
 	// 默认配置
-	opts := DefaultRepoOptions()
+	opts := DefaultRepoSealOptions()
 	// 自定义配置设置
 	for _, fn := range hands {
 		fn(&opts)

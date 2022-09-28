@@ -3,51 +3,54 @@ package srepo
 import (
 	"context"
 	"errors"
+
+	"github.com/rumis/storage/meta"
 )
 
 // 错误定义
 var ErrBothDbAndTxNil error = errors.New("both db and tx is nil")
+var ErrUpdateAffectZeroRows error = errors.New("update clauses affect zero rows")
 
 // 选项
-type RepoOptions struct {
+type RepoSealOptions struct {
 	TX      interface{}
 	DB      interface{}
 	Name    string
 	Columns []string
 }
 
-// RepoOptionHandler 数据库配置选项
-type RepoOptionHandler func(*RepoOptions)
+// RepoSealOptionHandler Seal数据库配置选项
+type RepoSealOptionHandler func(*RepoSealOptions)
 
-// 创建默认的Repo配置
-func DefaultRepoOptions() RepoOptions {
-	return RepoOptions{}
+// 创建默认的Seal Repo配置
+func DefaultRepoSealOptions() RepoSealOptions {
+	return RepoSealOptions{}
 }
 
 // WithName 表名
-func WithName(name string) RepoOptionHandler {
-	return func(opts *RepoOptions) {
+func WithName(name string) RepoSealOptionHandler {
+	return func(opts *RepoSealOptions) {
 		opts.Name = name
 	}
 }
 
 // WithDB 数据库实例
-func WithDB(db interface{}) RepoOptionHandler {
-	return func(opts *RepoOptions) {
+func WithDB(db interface{}) RepoSealOptionHandler {
+	return func(opts *RepoSealOptions) {
 		opts.DB = db
 	}
 }
 
 // WithDB 数据库实例
-func WithTX(tx interface{}) RepoOptionHandler {
-	return func(opts *RepoOptions) {
+func WithTX(tx interface{}) RepoSealOptionHandler {
+	return func(opts *RepoSealOptions) {
 		opts.TX = tx
 	}
 }
 
 // WithColumns 配置表字段
-func WithColumns(columns []string) RepoOptionHandler {
-	return func(opts *RepoOptions) {
+func WithColumns(columns []string) RepoSealOptionHandler {
+	return func(opts *RepoSealOptions) {
 		opts.Columns = columns
 	}
 }
@@ -75,3 +78,31 @@ type RepoReader func(ctx context.Context, data interface{}, where ...ClauseHandl
 // @params data 承载数据的指针
 // @params params 查询条件字段
 type RepoGroupReader func(ctx context.Context, data interface{}, params interface{}) error
+
+// RepoGroupOptions 自定义复杂操作集合
+type RepoGroupOptions struct {
+	Handler     interface{}
+	ExecLogFunc meta.RepoExecLogFunc
+}
+
+// RepoGroupOptionHandler 数据库配置选项
+type RepoGroupOptionHandler func(*RepoGroupOptions)
+
+// DefaultRepoGroupOptions 创建默认的Repo配置
+func DefaultRepoGroupOptions() RepoGroupOptions {
+	return RepoGroupOptions{}
+}
+
+// WithHandler 处理函数
+func WithHandler(h interface{}) RepoGroupOptionHandler {
+	return func(opts *RepoGroupOptions) {
+		opts.Handler = h
+	}
+}
+
+// WithExecLogger 日志函数
+func WithExecLogger(fn meta.RepoExecLogFunc) RepoGroupOptionHandler {
+	return func(opts *RepoGroupOptions) {
+		opts.ExecLogFunc = fn
+	}
+}
