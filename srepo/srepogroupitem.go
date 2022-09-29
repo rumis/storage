@@ -82,7 +82,22 @@ func NewMysqlGroupReader(hands ...RepoGroupOptionHandler) RepoGroupReader {
 				return err
 			}
 		case RepoGroupReader:
-			return fn(ctx, data, params)
+			err := fn(ctx, data, params)
+			if err != nil {
+				if opts.ExecLogFunc != nil {
+					opts.ExecLogFunc(ctx, time.Since(startTime), params, err)
+				}
+				return err
+			}
+		default:
+			err := errors.New("unsupport handler")
+			if opts.ExecLogFunc != nil {
+				opts.ExecLogFunc(ctx, time.Since(startTime), params, err)
+			}
+			return err
+		}
+		if opts.ExecLogFunc != nil {
+			opts.ExecLogFunc(ctx, time.Since(startTime), params, nil)
 		}
 		return nil
 	}

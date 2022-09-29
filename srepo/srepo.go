@@ -77,7 +77,7 @@ type RepoReader func(ctx context.Context, data interface{}, where ...ClauseHandl
 // RepoGroupReader 多表数据读取
 // @params data 承载数据的指针
 // @params params 查询条件字段
-type RepoGroupReader func(ctx context.Context, data interface{}, params interface{}) error
+type RepoGroupReader func(context.Context, interface{}, interface{}) error
 
 // RepoGroupOptions 自定义复杂操作集合
 type RepoGroupOptions struct {

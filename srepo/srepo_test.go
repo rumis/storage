@@ -2,6 +2,7 @@ package srepo
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -232,6 +233,14 @@ func TestRepoGroup(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func TestHandlerType(t *testing.T) {
+	groupUpdater := NewMysqlGroupReader(WithHandler(RepoGroupReader(func(ctx context.Context, out interface{}, params interface{}) error {
+		fmt.Sprintln("test run")
+		return nil
+	})))
+	groupUpdater(context.Background(), 2, 3)
 }
 
 type T1 struct {
