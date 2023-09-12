@@ -74,7 +74,7 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 	for _, hand := range hands {
 		hand(&opts)
 	}
-	return func(ctx context.Context, params interface{}, data interface{}) error {
+	return func(ctx context.Context, params interface{}, out interface{}) error {
 		startTime := time.Now()
 		if opts.Client == nil {
 			return ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
@@ -101,7 +101,7 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 			}
 			// 拼接为数组
 			totalRes := "[" + strings.Join(allRes, ",") + "]"
-			valueIT, ok := params.(meta.Value)
+			valueIT, ok := out.(meta.Value)
 			if !ok {
 				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, meta.EI_ValueNotImplement)
 			}
@@ -121,7 +121,7 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 			if err != nil {
 				return ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
 			}
-			valueIT, ok := params.(meta.Value)
+			valueIT, ok := out.(meta.Value)
 			if !ok {
 				return ExecLogError(ctx, opts.ExecLogFn, startTime, params, meta.EI_ValueNotImplement)
 			}
@@ -219,5 +219,36 @@ func NewRedisKeyValueSetNX(hands ...RedisOptionHandler) RedisKeyValueSetNX {
 		ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
 		return cmd.Val()
 
+	}
+}
+
+// NewRedisKeyValueSetExp 创建Expire方法,设置key的过期时间
+func NewRedisKeyValueSetExp(hands ...RedisOptionHandler) RedisKeyValueSetExp {
+	// 默认配置
+	opts := DefaultRedisOptions()
+	// 自定义配置设置
+	for _, hand := range hands {
+		hand(&opts)
+	}
+	return func(ctx context.Context, params interface{}, expire time.Duration) error {
+		startTime := time.Now()
+		if opts.Client == nil {
+			ExecLogError(ctx, opts.ExecLogFn, startTime, params, ErrClientNil)
+			return ErrClientNil
+		}
+		keyIT, ok := params.(meta.Key)
+		if !ok {
+			ExecLogError(ctx, opts.ExecLogFn, startTime, params, meta.EI_KeyNotImplement)
+			return meta.EI_KeyNotImplement
+		}
+		key := keyIT.Key()
+		cmd := opts.Client.Expire(ctx, key, expire)
+		err := cmd.Err()
+		if err != nil {
+			ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), err)
+			return err
+		}
+		ExecLogError(ctx, opts.ExecLogFn, startTime, cmd.String(), nil)
+		return nil
 	}
 }

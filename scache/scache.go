@@ -9,7 +9,7 @@ import (
 	"github.com/rumis/storage/v2/meta"
 )
 
-// StringKey String包装，用于Redis KEY
+// StringKey String包装，用于Redis KEY。不提供任何前缀，只实现了Key接口
 type StringKey string
 
 // Key 提供key
@@ -17,8 +17,10 @@ func (s StringKey) Key() string {
 	return string(s)
 }
 
+// StringKeySlice []String包装，用于Redis KEYs。不提供任何前缀，只实现了ForEach接口
 type StringKeySlice []StringKey
 
+// ForEach 遍历所有KEY
 func (ss StringKeySlice) ForEach(f meta.Iterator) error {
 	for _, v := range ss {
 		err := f(v)
