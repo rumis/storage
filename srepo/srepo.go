@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/rumis/storage/meta"
+	"github.com/rumis/storage/v2/meta"
 )
 
 // 错误定义

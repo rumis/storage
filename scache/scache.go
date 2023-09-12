@@ -6,57 +6,49 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage/meta"
+	"github.com/rumis/storage/v2/meta"
 )
 
-// Pair 键值对
-type Pair struct {
-	Key   string
-	Value string
+// StringKey String包装，用于Redis KEY
+type StringKey string
+
+// Key 提供key
+func (s StringKey) Key() string {
+	return string(s)
+}
+
+type StringKeySlice []StringKey
+
+func (ss StringKeySlice) ForEach(f meta.Iterator) error {
+	for _, v := range ss {
+		err := f(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Redis K-V类型读取
-type RedisKeyValueObjectReader func(ctx context.Context, params interface{}, out interface{}) error
-
-// Redis K-V类型读取
-type RedisKeyValueStringReader func(ctx context.Context, params interface{}) (interface{}, error)
+type RedisKeyValueReader func(ctx context.Context, param interface{}, out interface{}) error
 
 // Redis K-V类型写入
-type RedisKeyValueWriter func(ctx context.Context, params interface{}, expire time.Duration) error
+type RedisKeyValueWriter func(ctx context.Context, param interface{}, expire time.Duration) error
 
 // RedisKeyValueNX Redis SetNX
-type RedisKeyValueNX func(ctx context.Context, params interface{}, expire time.Duration) bool
+type RedisKeyValueSetNX func(ctx context.Context, param interface{}, expire time.Duration) bool
+
+// RedisKeyValueSetExp 设置超时时间
+type RedisKeyValueSetExp func(ctx context.Context, param interface{}, expire time.Duration) error
 
 // Redis K-V类型删除
-//
-// 参数param支持以下4种类型:
-//
-// 	string: 需要和prefix参数配合
-// 	[]string: 需要和prefix参数配合
-// 	实现接口ForEach：需要和KeyFn参数配合
-// 	其他值：需要和KeyFn参数配合
 type RedisKeyValueDeleter func(ctx context.Context, param interface{}) error
 
-// RedisKeyGenerator Redis Key生成
-type RedisKeyGenerator func(param interface{}) (string, error)
-
 // Redis List类型写入
+type RedisListWriter func(ctx context.Context, param interface{}) error
 
-// 参数param支持如下6种类型：
-
-// 	string：需要和prefix配合，自动写入key为【prefix】的List中
-// 	[]string: 需要和prefix配合，自动写入key为【prefix】的List中
-// 	Pair：需要和prefix配合，写入key为【prefix+p.Key】的List中
-// 	[]Pair：需要和prefix配合，写入key为【prefix+p.Key】的List中
-// 	实现接口ForEach：需要和KeyFn参数配合,每个元素通过KeyFn计算key，然后写入对应的List中，值经过json序列化
-// 	其他值：需要和KeyFn参数配合，通过KeyFn计算key，然后写入【key】的List中
-type RedisListWriter func(context.Context, interface{}) error
-
-// RedisListStringReader Redis List类型读取，每次读取一个值，返回结果为字符串
-type RedisListStringReader func(context.Context) (string, error)
-
-// RedisListObjectReader Redis List类型读取，每次读取一个值，返回结果为对象
-type RedisListObjectReader func(context.Context, interface{}) error
+// RedisListReader Redis List类型读取，每次读取一个值
+type RedisListReader func(ctx context.Context, out interface{}) error
 
 // ExecLogError 记录调用日志
 func ExecLogError(ctx context.Context, fn meta.RedisExecLogFunc, stime time.Time, args interface{}, e error) error {
@@ -68,8 +60,6 @@ func ExecLogError(ctx context.Context, fn meta.RedisExecLogFunc, stime time.Time
 
 // 选项
 type RedisOptions struct {
-	KeyFn     RedisKeyGenerator
-	Prefix    string
 	Client    *redis.Client
 	ExecLogFn meta.RedisExecLogFunc
 }
@@ -82,13 +72,6 @@ func DefaultRedisOptions() RedisOptions {
 	return RedisOptions{}
 }
 
-// WithKeyFn 配置KEY生成方法
-func WithKeyFn(fn RedisKeyGenerator) RedisOptionHandler {
-	return func(opts *RedisOptions) {
-		opts.KeyFn = fn
-	}
-}
-
 // WithClient 配置客户端实例
 func WithClient(client *redis.Client) RedisOptionHandler {
 	return func(opts *RedisOptions) {
@@ -96,14 +79,7 @@ func WithClient(client *redis.Client) RedisOptionHandler {
 	}
 }
 
-// WithPrefix 配置KEY前缀
-func WithPrefix(pre string) RedisOptionHandler {
-	return func(opts *RedisOptions) {
-		opts.Prefix = pre
-	}
-}
-
-// WithPrefix 配置KEY前缀
+// WithExecLogger 配置日志记录方法
 func WithExecLogger(fn meta.RedisExecLogFunc) RedisOptionHandler {
 	return func(opts *RedisOptions) {
 		opts.ExecLogFn = fn

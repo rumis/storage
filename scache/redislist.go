@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage/meta"
-	"github.com/rumis/storage/pkg/ujson"
+	"github.com/rumis/storage/v2/meta"
 )
 
 // NewRedisListWriter 创建新的Redis队列写入对象
@@ -23,65 +22,20 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 			return ErrClientNil
 		}
 		switch val := params.(type) {
-		case string:
-			cmd := opts.Client.RPush(ctx, opts.Prefix, val)
-			_, err := cmd.Result()
-			if opts.ExecLogFn != nil {
-				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
-			}
-			if err != nil {
-				return err
-			}
-		case []string:
-			ivals := make([]interface{}, 0, len(val))
-			for _, v := range val {
-				ivals = append(ivals, v)
-			}
-			cmd := opts.Client.RPush(ctx, opts.Prefix, ivals...)
-			_, err := cmd.Result()
-			if opts.ExecLogFn != nil {
-				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
-			}
-			if err != nil {
-				return err
-			}
-		case Pair:
-			cmd := opts.Client.RPush(ctx, opts.Prefix+val.Key, val.Value)
-			_, err := cmd.Result()
-			if opts.ExecLogFn != nil {
-				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
-			}
-			if err != nil {
-				return err
-			}
-		case []Pair:
-			for _, v := range val {
-				startTime = time.Now()
-				cmd := opts.Client.RPush(ctx, opts.Prefix+v.Key, v.Value)
-				_, err := cmd.Result()
-				if opts.ExecLogFn != nil {
-					opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
-				}
-				if err != nil {
-					return err
-				}
-			}
 		case meta.ForEach:
-			if opts.KeyFn == nil {
-				return ErrKeyFnNil
-			}
 			err := val.ForEach(func(item interface{}) error {
-				key, err := opts.KeyFn(item)
-				if err != nil {
-					return err
+				keyIT, ok := item.(meta.Key)
+				if !ok {
+					return meta.EI_KeyNotImplement
 				}
-				val, err := ujson.Marshal(item)
-				if err != nil {
-					return err
+				key := keyIT.Key()
+				valIT, ok := item.(meta.String)
+				if !ok {
+					return meta.EI_StringNotImplement
 				}
-				startTime = time.Now()
-				cmd := opts.Client.RPush(ctx, key, string(val))
-				_, err = cmd.Result()
+				val := valIT.String()
+				cmd := opts.Client.RPush(ctx, key, val)
+				_, err := cmd.Result()
 				if opts.ExecLogFn != nil {
 					opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
 				}
@@ -91,19 +45,18 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 				return err
 			}
 		default:
-			if opts.KeyFn == nil {
-				return ErrKeyFnNil
+			keyIT, ok := params.(meta.Key)
+			if !ok {
+				return meta.EI_KeyNotImplement
 			}
-			key, err := opts.KeyFn(val)
-			if err != nil {
-				return err
+			key := keyIT.Key()
+			valIT, ok := params.(meta.String)
+			if !ok {
+				return meta.EI_StringNotImplement
 			}
-			buf, err := ujson.Marshal(val)
-			if err != nil {
-				return err
-			}
-			cmd := opts.Client.RPush(ctx, key, string(buf))
-			_, err = cmd.Result()
+			val1 := valIT.String()
+			cmd := opts.Client.RPush(ctx, key, val1)
+			_, err := cmd.Result()
 			if opts.ExecLogFn != nil {
 				opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
 			}
@@ -116,49 +69,46 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 }
 
 // NewRedisListReader 创建新的Redis队列读取，读取器返回值为字符串
-func NewRedisListStringReader(hands ...RedisOptionHandler) RedisListStringReader {
+func NewRedisListReader(hands ...RedisOptionHandler) RedisListReader {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
 	for _, hand := range hands {
 		hand(&opts)
 	}
-	return func(ctx context.Context) (string, error) {
+	return func(ctx context.Context, out interface{}) error {
 		if opts.Client == nil {
-			return "", ErrClientNil
+			return ErrClientNil
 		}
 		startTime := time.Now()
-		// Exec
-		cmd := opts.Client.LPop(ctx, opts.Prefix)
+		// 获取缓存key
+		keyIT, ok := out.(meta.Key)
+		if !ok {
+			return meta.EI_KeyNotImplement
+		}
+		key := keyIT.Key()
+
+		// 读取数据
+		cmd := opts.Client.LPop(ctx, key)
 		elem, err := cmd.Result()
+		if err == redis.Nil {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		// 初始化对象内容
+		valIT, ok := out.(meta.Value)
+		if !ok {
+			return meta.EI_ValueNotImplement
+		}
+		err = valIT.Value(elem)
+		if err != nil {
+			return err
+		}
 		// Log
 		if opts.ExecLogFn != nil {
 			opts.ExecLogFn(ctx, time.Since(startTime), cmd.String(), err)
-		}
-		if err == redis.Nil {
-			return "", nil
-		}
-		if err != nil {
-			return "", err
-		}
-		return elem, nil
-	}
-}
-
-// NewRedisListObjectReader 创建新的Redis List对象读取，读取器返回值为对象
-func NewRedisListObjectReader(hands ...RedisOptionHandler) RedisListObjectReader {
-	strReader := NewRedisListStringReader(hands...)
-	return func(ctx context.Context, data interface{}) error {
-		elem, err := strReader(ctx)
-		if err != nil {
-			return err
-		}
-		if elem == "" {
-			return nil
-		}
-		err = ujson.Unmarshal([]byte(elem), data)
-		if err != nil {
-			return err
 		}
 		return nil
 	}

@@ -7,11 +7,10 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/rumis/storage/locker"
-	"github.com/rumis/storage/meta"
-	"github.com/rumis/storage/pkg/ujson"
-	"github.com/rumis/storage/scache"
-	"github.com/rumis/storage/srepo"
+	"github.com/rumis/storage/v2/locker"
+	"github.com/rumis/storage/v2/meta"
+	"github.com/rumis/storage/v2/scache"
+	"github.com/rumis/storage/v2/srepo"
 )
 
 // OneCacheRepoOptionsHandler 单一对象缓存配置处理方法
@@ -19,7 +18,7 @@ type OneCacheRepoOptionsHandler func(*OneCacheRepoOptions)
 
 // OneCacheRepoOptions 单一对象缓存配置
 type OneCacheRepoOptions struct {
-	CacheReader scache.RedisKeyValueObjectReader
+	CacheReader scache.RedisKeyValueReader
 	CacheWriter scache.RedisKeyValueWriter
 	RepoReader  srepo.RepoGroupReader
 	Locker      locker.Locker
@@ -35,7 +34,7 @@ func NewOneCacheRepoOptions(hand ...OneCacheRepoOptionsHandler) OneCacheRepoOpti
 }
 
 // WithCacheReader 缓存读取器
-func WithCacheReader(r scache.RedisKeyValueObjectReader) OneCacheRepoOptionsHandler {
+func WithCacheReader(r scache.RedisKeyValueReader) OneCacheRepoOptionsHandler {
 	return func(opts *OneCacheRepoOptions) {
 		opts.CacheReader = r
 	}
@@ -148,14 +147,11 @@ func NewOneCacheRepoReader(opts OneCacheRepoOptions) func(ctx context.Context, p
 			expire = opts.Locker.Expire
 		}
 		// 写缓存
-		buf, err := ujson.Marshal(out)
-		if err != nil {
-			return err
-		}
-		err = opts.CacheWriter(ctx, scache.Pair{
-			Key:   fmt.Sprint(params),
-			Value: string(buf),
-		}, expire)
+		// buf, err := ujson.Marshal(out)
+		// if err != nil {
+		// 	return err
+		// }
+		err = opts.CacheWriter(ctx, out, expire)
 		if err != nil {
 			fmt.Println("redis write erro")
 		}

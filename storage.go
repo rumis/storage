@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/rumis/storage/meta"
+	"github.com/rumis/storage/v2/meta"
 )
 
 // DataHandler 数据处理

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rumis/storage/pkg/ujson"
+	"github.com/rumis/storage/v2/pkg/ujson"
 	"github.com/segmentio/kafka-go"
 )
 

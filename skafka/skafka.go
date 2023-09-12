@@ -5,7 +5,7 @@ import (
 	"crypto/x509"
 	"sync"
 
-	"github.com/rumis/storage/meta"
+	"github.com/rumis/storage/v2/meta"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl/plain"
 )

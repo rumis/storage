@@ -9,7 +9,7 @@ import (
 	"github.com/rumis/seal"
 	"github.com/rumis/seal/builder"
 	"github.com/rumis/seal/query"
-	"github.com/rumis/storage/meta"
+	"github.com/rumis/storage/v2/meta"
 )
 
 func TestRepo(t *testing.T) {

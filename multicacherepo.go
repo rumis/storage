@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/rumis/storage/scache"
-	"github.com/rumis/storage/srepo"
+	"github.com/rumis/storage/v2/scache"
+	"github.com/rumis/storage/v2/srepo"
 )
 
 // NewMultiCacheRepoReader 多key读取
 // @params keyfn Key生成函数
-func NewMultiCacheReader(keyfn scache.RedisKeyGenerator) scache.RedisKeyValueObjectReader {
-	mr := scache.NewRedisKeyValueObjectReader(scache.WithClient(scache.DefaultClient()), scache.WithKeyFn(keyfn))
+func NewMultiCacheReader() scache.RedisKeyValueReader {
+	mr := scache.NewRedisKeyValueReader(scache.WithClient(scache.DefaultClient()))
 	// @params params 要求实现ForEach接口
 	// @params out 要求实现Key、Zero接口
 	return func(ctx context.Context, params interface{}, out interface{}) error {
@@ -21,8 +21,8 @@ func NewMultiCacheReader(keyfn scache.RedisKeyGenerator) scache.RedisKeyValueObj
 }
 
 // NewOneCacheWriter 缓存对象写入
-func NewMultiCacheWriter(keyfn scache.RedisKeyGenerator) func(ctx context.Context, data interface{}, expire time.Duration) error {
-	w := scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()), scache.WithKeyFn(keyfn))
+func NewMultiCacheWriter() func(ctx context.Context, data interface{}, expire time.Duration) error {
+	w := scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()))
 	return func(ctx context.Context, data interface{}, expire time.Duration) error {
 		err := w(ctx, data, expire)
 		return err
@@ -41,7 +41,7 @@ func NewMultiRepoReader(tableName string, columns []string) func(ctx context.Con
 // NewMultiCacheRepoReader1 通用缓存-库数据读取器,多值
 // DO NOT USE
 // TODO
-func NewMultiCacheRepoReader1(keyFn scache.RedisKeyGenerator, tablename string, columns []string, biz string) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
+func NewMultiCacheRepoReader1(tablename string, columns []string, biz string) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
 	// cacheReader := NewMultiCacheReader(keyFn)
 	// cacheWriter := NewMultiCacheWriter(keyFn)
 	// repoReader := NewMultiRepoReader(tablename, columns)

@@ -6,8 +6,8 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/rumis/seal"
 	"github.com/rumis/seal/builder"
-	"github.com/rumis/storage/scache"
-	"github.com/rumis/storage/srepo"
+	"github.com/rumis/storage/v2/scache"
+	"github.com/rumis/storage/v2/srepo"
 )
 
 // InitClient 初始化

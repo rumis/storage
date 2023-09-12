@@ -2,18 +2,16 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/rumis/storage/locker"
-	"github.com/rumis/storage/pkg/ujson"
-	"github.com/rumis/storage/scache"
-	"github.com/rumis/storage/srepo"
-	"github.com/rumis/storage/test"
+	"github.com/rumis/storage/v2/locker"
+	"github.com/rumis/storage/v2/scache"
+	"github.com/rumis/storage/v2/srepo"
+	"github.com/rumis/storage/v2/test"
 )
 
 func TestOneCacheRepoReader(t *testing.T) {
@@ -40,7 +38,7 @@ func TestOneCacheRepoReader(t *testing.T) {
 	// genericReader := NewOneCacheRepoReader("tal_test_person_", "tal_test_person", []string{"id", "name", "age"}, "person")
 
 	genericReader := NewOneCacheRepoReader(NewOneCacheRepoOptions(
-		WithCacheReader(NewOneCacheReader("tal_test_person_")),
+		WithCacheReader(NewOneCacheReader()),
 		WithCacheWriter(NewOneCacheWriter("tal_test_person_")),
 		WithRepoReader(NewOneRepoReader("tal_test_person", []string{"id", "name", "age"})),
 		WithLocker(NewDefaultLocker("person")),
@@ -69,28 +67,14 @@ func TestOneCacheRepoReader(t *testing.T) {
 }
 
 // // NewOneCacheReader 缓存对象读取
-func NewOneCacheReader(prefix string) scache.RedisKeyValueObjectReader {
-	r := scache.NewRedisKeyValueStringReader(scache.WithClient(scache.DefaultClient()), scache.WithPrefix(prefix))
-	return func(ctx context.Context, params interface{}, out interface{}) error {
-		res, err := r(ctx, fmt.Sprint(params))
-		if err != nil {
-			return err
-		}
-		resp, ok := res.(string)
-		if !ok {
-			return errors.New("format error")
-		}
-		err = ujson.Unmarshal([]byte(resp), out)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+func NewOneCacheReader() scache.RedisKeyValueReader {
+	r := scache.NewRedisKeyValueReader(scache.WithClient(scache.DefaultClient()))
+	return r
 }
 
 // NewOneCacheWriter 缓存对象写入
 func NewOneCacheWriter(prefix string) scache.RedisKeyValueWriter {
-	return scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()), scache.WithPrefix(prefix))
+	return scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()))
 	// return func(ctx context.Context, kv scache.Pair, expire time.Duration) error {
 	// 	err := w(ctx, kv, expire)
 	// 	return err
@@ -139,7 +123,7 @@ func BenchmarkOneCacheRepoReader(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// 读取
 		genericReader := NewOneCacheRepoReader(NewOneCacheRepoOptions(
-			WithCacheReader(NewOneCacheReader("tal_test_person_")),
+			WithCacheReader(NewOneCacheReader()),
 			WithCacheWriter(NewOneCacheWriter("tal_test_person_")),
 			WithRepoReader(NewOneRepoReader("tal_test_person", []string{"id", "name", "age"})),
 			WithLocker(NewDefaultLocker("person")),
