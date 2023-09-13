@@ -9,7 +9,7 @@ import (
 )
 
 // NewRedisListWriter 创建新的Redis队列写入对象
-func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
+func NewRedisListWriter(hands ...RedisOptionHandler) meta.ListWriter {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -69,7 +69,7 @@ func NewRedisListWriter(hands ...RedisOptionHandler) RedisListWriter {
 }
 
 // NewRedisListReader 创建新的Redis队列读取，读取器返回值为字符串
-func NewRedisListReader(hands ...RedisOptionHandler) RedisListReader {
+func NewRedisListReader(hands ...RedisOptionHandler) meta.ListReader {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置

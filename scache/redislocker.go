@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/rumis/storage/v2/locker"
+	"github.com/rumis/storage/v2/meta"
 )
 
 var defaultLockerPrefix = "tal_jiaoyan_storage_locker_"
@@ -18,8 +19,8 @@ func DefaultRedisLocker(client *redis.Client, biz string) locker.Locker {
 	)
 }
 
-// RedisLockerWriter
-func RedisLockerAdder(a RedisKeyValueSetNX, expire time.Duration) locker.LockerAdder {
+// RedisLockerAdder
+func RedisLockerAdder(a meta.KeyValueSetNX, expire time.Duration) locker.LockerAdder {
 	return func(ctx context.Context, key string) bool {
 		err := a(ctx, StringKey(key), expire)
 		return err
@@ -27,7 +28,7 @@ func RedisLockerAdder(a RedisKeyValueSetNX, expire time.Duration) locker.LockerA
 }
 
 // RedisLockerDeleter
-func RedisLockerDeleter(d RedisKeyValueDeleter) locker.LockerDeleter {
+func RedisLockerDeleter(d meta.KeyValueDeleter) locker.LockerDeleter {
 	return func(ctx context.Context, key string) error {
 		err := d(ctx, StringKey(key))
 		return err

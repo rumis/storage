@@ -9,7 +9,7 @@ import (
 )
 
 // NewRedisKeyValueWriter 创建新的缓存写入
-func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
+func NewRedisKeyValueWriter(hands ...RedisOptionHandler) meta.KeyValueWriter {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -67,7 +67,7 @@ func NewRedisKeyValueWriter(hands ...RedisOptionHandler) RedisKeyValueWriter {
 }
 
 // NewRedisKeyValueReader 自定义Redis读取
-func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
+func NewRedisKeyValueReader(hands ...RedisOptionHandler) meta.KeyValueReader {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -135,7 +135,7 @@ func NewRedisKeyValueReader(hands ...RedisOptionHandler) RedisKeyValueReader {
 }
 
 // NewRedisKeyValueDeleter 缓存删除
-func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
+func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) meta.KeyValueDeleter {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -186,7 +186,7 @@ func NewRedisKeyValueDeleter(hands ...RedisOptionHandler) RedisKeyValueDeleter {
 }
 
 // NewRedisKeyValueSetNX 创建SetNX方法
-func NewRedisKeyValueSetNX(hands ...RedisOptionHandler) RedisKeyValueSetNX {
+func NewRedisKeyValueSetNX(hands ...RedisOptionHandler) meta.KeyValueSetNX {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置
@@ -223,7 +223,7 @@ func NewRedisKeyValueSetNX(hands ...RedisOptionHandler) RedisKeyValueSetNX {
 }
 
 // NewRedisKeyValueSetExp 创建Expire方法,设置key的过期时间
-func NewRedisKeyValueSetExp(hands ...RedisOptionHandler) RedisKeyValueSetExp {
+func NewRedisKeyValueSetExp(hands ...RedisOptionHandler) meta.KeyValueSetExp {
 	// 默认配置
 	opts := DefaultRedisOptions()
 	// 自定义配置设置

@@ -31,27 +31,6 @@ func (ss StringKeySlice) ForEach(f meta.Iterator) error {
 	return nil
 }
 
-// Redis K-V类型读取
-type RedisKeyValueReader func(ctx context.Context, param interface{}, out interface{}) error
-
-// Redis K-V类型写入
-type RedisKeyValueWriter func(ctx context.Context, param interface{}, expire time.Duration) error
-
-// RedisKeyValueNX Redis SetNX
-type RedisKeyValueSetNX func(ctx context.Context, param interface{}, expire time.Duration) bool
-
-// RedisKeyValueSetExp 设置超时时间
-type RedisKeyValueSetExp func(ctx context.Context, param interface{}, expire time.Duration) error
-
-// Redis K-V类型删除
-type RedisKeyValueDeleter func(ctx context.Context, param interface{}) error
-
-// Redis List类型写入
-type RedisListWriter func(ctx context.Context, param interface{}) error
-
-// RedisListReader Redis List类型读取，每次读取一个值
-type RedisListReader func(ctx context.Context, out interface{}) error
-
 // ExecLogError 记录调用日志
 func ExecLogError(ctx context.Context, fn meta.RedisExecLogFunc, stime time.Time, args interface{}, e error) error {
 	if fn != nil {

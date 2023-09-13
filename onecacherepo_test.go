@@ -9,6 +9,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/rumis/storage/v2/locker"
+	"github.com/rumis/storage/v2/meta"
 	"github.com/rumis/storage/v2/scache"
 	"github.com/rumis/storage/v2/srepo"
 	"github.com/rumis/storage/v2/test"
@@ -67,13 +68,13 @@ func TestOneCacheRepoReader(t *testing.T) {
 }
 
 // // NewOneCacheReader 缓存对象读取
-func NewOneCacheReader() scache.RedisKeyValueReader {
+func NewOneCacheReader() meta.KeyValueReader {
 	r := scache.NewRedisKeyValueReader(scache.WithClient(scache.DefaultClient()))
 	return r
 }
 
 // NewOneCacheWriter 缓存对象写入
-func NewOneCacheWriter(prefix string) scache.RedisKeyValueWriter {
+func NewOneCacheWriter(prefix string) meta.KeyValueWriter {
 	return scache.NewRedisKeyValueWriter(scache.WithClient(scache.DefaultClient()))
 	// return func(ctx context.Context, kv scache.Pair, expire time.Duration) error {
 	// 	err := w(ctx, kv, expire)

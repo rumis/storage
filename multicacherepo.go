@@ -4,13 +4,14 @@ import (
 	"context"
 	"time"
 
+	"github.com/rumis/storage/v2/meta"
 	"github.com/rumis/storage/v2/scache"
 	"github.com/rumis/storage/v2/srepo"
 )
 
 // NewMultiCacheRepoReader 多key读取
 // @params keyfn Key生成函数
-func NewMultiCacheReader() scache.RedisKeyValueReader {
+func NewMultiCacheReader() meta.KeyValueReader {
 	mr := scache.NewRedisKeyValueReader(scache.WithClient(scache.DefaultClient()))
 	// @params params 要求实现ForEach接口
 	// @params out 要求实现Key、Zero接口

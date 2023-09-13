@@ -9,7 +9,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/rumis/storage/v2/locker"
 	"github.com/rumis/storage/v2/meta"
-	"github.com/rumis/storage/v2/scache"
 	"github.com/rumis/storage/v2/srepo"
 )
 
@@ -18,8 +17,8 @@ type OneCacheRepoOptionsHandler func(*OneCacheRepoOptions)
 
 // OneCacheRepoOptions 单一对象缓存配置
 type OneCacheRepoOptions struct {
-	CacheReader scache.RedisKeyValueReader
-	CacheWriter scache.RedisKeyValueWriter
+	CacheReader meta.KeyValueReader
+	CacheWriter meta.KeyValueWriter
 	RepoReader  srepo.RepoGroupReader
 	Locker      locker.Locker
 }
@@ -34,14 +33,14 @@ func NewOneCacheRepoOptions(hand ...OneCacheRepoOptionsHandler) OneCacheRepoOpti
 }
 
 // WithCacheReader 缓存读取器
-func WithCacheReader(r scache.RedisKeyValueReader) OneCacheRepoOptionsHandler {
+func WithCacheReader(r meta.KeyValueReader) OneCacheRepoOptionsHandler {
 	return func(opts *OneCacheRepoOptions) {
 		opts.CacheReader = r
 	}
 }
 
 // WithCacheWriter 缓存写入
-func WithCacheWriter(w scache.RedisKeyValueWriter) OneCacheRepoOptionsHandler {
+func WithCacheWriter(w meta.KeyValueWriter) OneCacheRepoOptionsHandler {
 	return func(opts *OneCacheRepoOptions) {
 		opts.CacheWriter = w
 	}
@@ -122,7 +121,6 @@ func NewOneCacheRepoReader(opts OneCacheRepoOptions) func(ctx context.Context, p
 			fmt.Println("记录错误")
 		}
 		// 读取错误&缓存中key不存在都继续执行以下流程
-
 		// 锁
 		ok = opts.Locker.Adder(ctx, fmt.Sprint(params))
 		if !ok {
