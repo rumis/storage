@@ -6,7 +6,6 @@ import (
 
 	"github.com/rumis/storage/v2/meta"
 	"github.com/rumis/storage/v2/scache"
-	"github.com/rumis/storage/v2/srepo"
 )
 
 // NewMultiCacheRepoReader 多key读取
@@ -31,23 +30,23 @@ func NewMultiCacheWriter() func(ctx context.Context, data interface{}, expire ti
 }
 
 // NewMultiRepoReader 通用数据库读取
-func NewMultiRepoReader(tableName string, columns []string) func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
-	r := srepo.NewSealMysqlMultiReader(srepo.WithName(tableName), srepo.WithDB(srepo.SealR()), srepo.WithColumns(columns))
-	return func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
-		err := r(ctx, out, hand...)
-		return err
-	}
-}
+// func NewMultiRepoReader(tableName string, columns []string) func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
+// 	r := srepo.NewSealMysqlMultiReader(srepo.WithName(tableName), srepo.WithDB(srepo.SealR()), srepo.WithColumns(columns))
+// 	return func(ctx context.Context, out interface{}, hand ...srepo.ClauseHandler) error {
+// 		err := r(ctx, out, hand...)
+// 		return err
+// 	}
+// }
 
 // NewMultiCacheRepoReader1 通用缓存-库数据读取器,多值
 // DO NOT USE
 // TODO
-func NewMultiCacheRepoReader1(tablename string, columns []string, biz string) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
+func NewMultiCacheRepoReader1(tablename string, columns []string, biz string) func(ctx context.Context, params interface{}, expire time.Duration, out interface{}) error {
 	// cacheReader := NewMultiCacheReader(keyFn)
 	// cacheWriter := NewMultiCacheWriter(keyFn)
 	// repoReader := NewMultiRepoReader(tablename, columns)
 	// locker := NewDefaultLocker(biz)
-	return func(ctx context.Context, params interface{}, expire time.Duration, out interface{}, opts ...srepo.ClauseHandler) error {
+	return func(ctx context.Context, params interface{}, expire time.Duration, out interface{}) error {
 		// 	outEach, ok := out.(meta.ForEach)
 		// 	if !ok {
 		// 		return errors.New("param out must implements ForEach interface")

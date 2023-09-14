@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/rumis/seal"
+	"github.com/rumis/storage/v2/meta"
 )
 
-// NewSealMysqlInserter 创建新的Seal数据写入对象
-func NewSealMysqlInserter(hands ...RepoSealOptionHandler) RepoInserter {
+// NewSealMysqlOneInserter 创建新的Seal数据写入对象-一次写入一条记录
+func NewSealMysqlOneInserter(hands ...RepoSealOptionHandler) meta.RepoInserter {
 	// 默认配置
 	opts := DefaultRepoSealOptions()
 	// 自定义配置设置
@@ -37,7 +38,7 @@ func NewSealMysqlInserter(hands ...RepoSealOptionHandler) RepoInserter {
 }
 
 // NewSealMysqlMultiInserter 创建新的Seal数据写入对象-一次写入多次数据
-func NewSealMysqlMultiInserter(hands ...RepoSealOptionHandler) RepoInserter {
+func NewSealMysqlMultiInserter(hands ...RepoSealOptionHandler) meta.RepoInserter {
 	// 默认配置
 	opts := DefaultRepoSealOptions()
 	// 自定义配置设置

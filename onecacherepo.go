@@ -9,7 +9,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/rumis/storage/v2/locker"
 	"github.com/rumis/storage/v2/meta"
-	"github.com/rumis/storage/v2/srepo"
 )
 
 // OneCacheRepoOptionsHandler 单一对象缓存配置处理方法
@@ -19,7 +18,7 @@ type OneCacheRepoOptionsHandler func(*OneCacheRepoOptions)
 type OneCacheRepoOptions struct {
 	CacheReader meta.KeyValueReader
 	CacheWriter meta.KeyValueWriter
-	RepoReader  srepo.RepoGroupReader
+	RepoReader  meta.RepoReader
 	Locker      locker.Locker
 }
 
@@ -47,7 +46,7 @@ func WithCacheWriter(w meta.KeyValueWriter) OneCacheRepoOptionsHandler {
 }
 
 // WithRepoReader 数据库读取
-func WithRepoReader(r srepo.RepoGroupReader) OneCacheRepoOptionsHandler {
+func WithRepoReader(r meta.RepoReader) OneCacheRepoOptionsHandler {
 	return func(opts *OneCacheRepoOptions) {
 		opts.RepoReader = r
 	}
@@ -135,7 +134,11 @@ func NewOneCacheRepoReader(opts OneCacheRepoOptions) func(ctx context.Context, p
 			}
 		}
 		// 缓存未读到数据 读库
-		err = opts.RepoReader(ctx, out, params)
+		queryHandler, ok := params.(meta.Query)
+		if !ok {
+			return errors.New("")
+		}
+		err = opts.RepoReader(ctx, out, queryHandler.Query(context.Background()))
 		if err != nil {
 			// 读库失败，返回错误
 			return err

@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"testing"
 	"time"
 
@@ -24,7 +23,7 @@ func TestOneCacheRepoReader(t *testing.T) {
 	mock.ExpectQuery("SELECT id,name,age FROM tal_test_person WHERE id=? LIMIT 1").WithArgs(1).WillReturnRows(rows)
 
 	// 写入一条测试数据
-	inster := srepo.NewSealMysqlInserter(srepo.WithDB(srepo.SealW()), srepo.WithName("tal_test_person"))
+	inster := srepo.NewSealMysqlOneInserter(srepo.WithDB(srepo.SealW()), srepo.WithName("tal_test_person"))
 	t1 := test.Person{
 		ID:   1,
 		Name: "张三",
@@ -83,17 +82,20 @@ func NewOneCacheWriter(prefix string) meta.KeyValueWriter {
 }
 
 // NewOneRepoReader 通用数据库读取
-func NewOneRepoReader(tableName string, columns []string) srepo.RepoGroupReader {
+func NewOneRepoReader(tableName string, columns []string) meta.RepoReader {
 	r := srepo.NewSealMysqlOneReader(srepo.WithName(tableName), srepo.WithDB(srepo.SealR()), srepo.WithColumns(columns))
-	return func(ctx context.Context, out interface{}, params interface{}) error {
-		pstr := fmt.Sprint(params)
-		id, err := strconv.Atoi(pstr)
-		if err != nil {
-			return err
-		}
-		err = r(ctx, out, srepo.SealQEq("id", id))
-		return err
-	}
+
+	return r
+
+	// return func(ctx context.Context, out interface{}, params interface{}) error {
+	// 	// pstr := fmt.Sprint(params)
+	// 	// id, err := strconv.Atoi(pstr)
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// 	err = r(ctx, out, srepo.SealQEq("id", id))
+	// 	return err
+	// }
 }
 
 // NewDefaultLocker 默认通用锁
@@ -110,7 +112,7 @@ func BenchmarkOneCacheRepoReader(b *testing.B) {
 	mock.ExpectQuery("SELECT id,name,age FROM tal_test_person WHERE id=? LIMIT 1").WithArgs(1).WillReturnRows(rows)
 
 	// 写入一条测试数据
-	inster := srepo.NewSealMysqlInserter(srepo.WithDB(srepo.SealW()), srepo.WithName("tal_test_person"))
+	inster := srepo.NewSealMysqlOneInserter(srepo.WithDB(srepo.SealW()), srepo.WithName("tal_test_person"))
 	t1 := test.Person{
 		ID:   1,
 		Name: "张三",
